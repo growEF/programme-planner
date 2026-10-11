@@ -24,7 +24,6 @@
     .controls-card { background: #ffffff; border: 1px solid #dadce0; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
     .btn { padding: 6px 14px; border: 1px solid #dadce0; border-radius: 16px; background: #ffffff; cursor: pointer; font-size: 12px; font-weight: bold; color: #3c4043; transition: all 0.15s ease; }
     .btn.active { background-color: #1a73e8; color: #ffffff; border-color: #1a73e8; }
-    .btn-sub { padding: 4px 10px; font-size: 11px; border-radius: 12px; }
 
     .section-title { font-size: 14px; font-weight: bold; color: #3c4043; margin-top: 0; margin-bottom: 12px; }
 
@@ -63,33 +62,23 @@
     .load-4 { height: 80%; background-color: #ea4335; }
     .load-5 { height: 100%; background-color: #b31412; }
 
-    /* Visual 3: Vertical Weekly Overlap View */
-    .calendar-card { background: #ffffff; border: 1px solid #dadce0; border-radius: 8px; padding: 16px; margin-bottom: 24px; }
-    .calendar-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
-    .calendar-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    /* Visual 3: Vertical 52-Week Programme Flow Matrix */
+    .matrix-card { background: #ffffff; border: 1px solid #dadce0; border-radius: 8px; padding: 16px; margin-bottom: 24px; }
+    .matrix-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .matrix-table th { background: #f1f3f4; color: #3c4043; padding: 8px; border: 1px solid #dadce0; font-weight: bold; text-align: center; position: sticky; top: 0; z-index: 5; }
+    .matrix-table td { padding: 6px 8px; border: 1px solid #e8eaed; vertical-align: top; text-align: center; }
+    .matrix-table tr:hover { background-color: #f8f9fa; }
     
-    .month-card { border: 1px solid #dadce0; border-radius: 8px; background: #ffffff; padding: 12px; min-height: 140px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
-    .month-header { font-size: 13px; font-weight: bold; color: #1a73e8; border-bottom: 2px solid #e8eaed; padding-bottom: 6px; margin-bottom: 10px; text-align: center; }
+    .week-col-label { font-weight: bold; color: #1a73e8; background: #fafafa; width: 130px; text-align: left !important; }
+    .matrix-cell-empty { color: #bdc1c6; font-style: italic; font-size: 10px; }
     
-    .week-row { margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px dashed #f1f3f4; }
-    .week-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-    .week-label { font-size: 10px; font-weight: bold; color: #5f6368; margin-bottom: 3px; display: flex; justify-content: space-between; }
+    .matrix-block { padding: 4px 8px; border-radius: 4px; color: #ffffff; font-weight: bold; font-size: 10px; margin-bottom: 2px; display: block; width: 100%; text-align: left; }
+    .matrix-block-gt { background-color: #1a73e8; }
+    .matrix-block-ge { background-color: #1e8e3e; }
+    .matrix-block-gg { background-color: #d93025; }
+    .matrix-meta { font-size: 9px; font-weight: normal; opacity: 0.95; float: right; }
     
-    .overlap-bars { display: flex; flex-direction: column; gap: 3px; }
-    .overlap-pill { font-size: 10px; padding: 3px 6px; border-radius: 4px; color: #ffffff; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-    .pill-gt { background-color: #1a73e8; }
-    .pill-ge { background-color: #1e8e3e; }
-    .pill-gg { background-color: #d93025; }
-    .pill-meta { font-size: 9px; font-weight: normal; opacity: 0.95; }
-
-    /* Modal */
-    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
-    .modal-card { background: #ffffff; border-radius: 8px; width: 500px; max-width: 90%; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #dadce0; padding-bottom: 10px; margin-bottom: 16px; }
-    .modal-header h3 { margin: 0; font-size: 16px; color: #1a73e8; }
-    .close-btn { cursor: pointer; font-size: 18px; font-weight: bold; color: #5f6368; }
-    .modal-body { max-height: 350px; overflow-y: auto; }
-    .detail-item { background: #f8f9fa; border: 1px solid #dadce0; border-radius: 6px; padding: 10px; margin-bottom: 8px; font-size: 12px; }
+    .month-divider td { background: #e8f0fe !important; color: #174ea6; font-weight: bold; text-align: left !important; font-size: 12px; padding: 6px 10px; border-top: 2px solid #aecbfa; }
   </style>
 </head>
 <body>
@@ -130,37 +119,28 @@
       <div class="chart-grid" id="jamie-chart"></div>
     </div>
 
-    <!-- VISUAL 3: VERTICAL WEEKLY OVERLAP VIEW -->
-    <div class="calendar-card">
-      <div class="calendar-toolbar">
-        <div class="section-title" style="margin-bottom:0;">3. Monthly Programme Overlap (Weekly Breakdown)</div>
-        <div>
-          <button class="btn btn-sub active" onclick="setQuarter('ALL', this)">Full Year</button>
-          <button class="btn btn-sub" onclick="setQuarter('Q1', this)">Q1 (Jan-Mar)</button>
-          <button class="btn btn-sub" onclick="setQuarter('Q2', this)">Q2 (Apr-Jun)</button>
-          <button class="btn btn-sub" onclick="setQuarter('Q3', this)">Q3 (Jul-Sep)</button>
-          <button class="btn btn-sub" onclick="setQuarter('Q4', this)">Q4 (Oct-Dec)</button>
-        </div>
+    <!-- VISUAL 3: VERTICAL 52-WEEK PROGRAMME FLOW MATRIX -->
+    <div class="matrix-card">
+      <div class="section-title">3. 52-Week Vertical Programme Flow & Overlap Matrix</div>
+      <div style="max-height: 600px; overflow-y: auto; border: 1px solid #dadce0; border-radius: 6px;">
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th style="width: 130px; text-align: left;">Week</th>
+              <th>GT Cohorts (4 Wks)</th>
+              <th>GE Extended Pathway (10 Wks)</th>
+              <th>GG Cohorts</th>
+            </tr>
+          </thead>
+          <tbody id="matrix-body"></tbody>
+        </table>
       </div>
-      <div class="calendar-grid" id="calendar-grid"></div>
     </div>
 
-  </div>
-
-  <!-- MODAL -->
-  <div class="modal-overlay" id="month-modal">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3 id="modal-title">Week Detail</h3>
-        <span class="close-btn" onclick="closeModal()">&times;</span>
-      </div>
-      <div class="modal-body" id="modal-body"></div>
-    </div>
   </div>
 
   <script>
     let activeFilter = 'All';
-    let activeQuarter = 'ALL';
 
     let cohorts = [
       { id: 'GT1', programme: 'GT', start: '2027-02-15', end: '2027-03-12', lead: 'Dave', leadSessions: 3, support: 'Jamie', supportSessions: 0 },
@@ -247,18 +227,18 @@
       renderAll();
     }
 
+    function isPersonInvolved(item, person) {
+      if (person === 'All') return true;
+      const isLead = item.lead.includes(person);
+      const isSupport = item.support === person && item.supportSessions > 0;
+      return isLead || isSupport;
+    }
+
     function setFilter(filter, btn) {
       activeFilter = filter;
       document.querySelectorAll('.controls-card .btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       renderAll();
-    }
-
-    function setQuarter(q, btn) {
-      activeQuarter = q;
-      document.querySelectorAll('.calendar-toolbar .btn-sub').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      renderCalendar();
     }
 
     function getWeekNumber(dateStr) {
@@ -267,16 +247,13 @@
       return Math.ceil((((d - start) / 86400000) + start.getDay() + 1) / 7);
     }
 
+    /* 1. GANTT RENDER */
     function renderGantt() {
       const container = document.getElementById('gantt-rows');
       container.innerHTML = '';
 
       cohorts.forEach(item => {
-        if (activeFilter !== 'All') {
-          const isLead = item.lead.includes(activeFilter);
-          const isSupport = item.support === activeFilter;
-          if (!isLead && !isSupport) return;
-        }
+        if (!isPersonInvolved(item, activeFilter)) return;
 
         const row = document.createElement('div');
         row.className = 'programme-row';
@@ -312,6 +289,7 @@
       });
     }
 
+    /* 2. WORKLOAD RENDER */
     function calculateWorkload(person) {
       const weeklyTotals = new Array(53).fill(0);
 
@@ -360,122 +338,74 @@
       }
     }
 
-    /* VERTICAL WEEKLY OVERLAP CALENDAR */
-    function renderCalendar() {
-      const grid = document.getElementById('calendar-grid');
-      grid.innerHTML = '';
+    /* 3. VERTICAL 52-WEEK MATRIX RENDER */
+    function renderMatrix() {
+      const tbody = document.getElementById('matrix-body');
+      tbody.innerHTML = '';
 
-      months.forEach((monthName, monthIndex) => {
-        if (activeQuarter === 'Q1' && monthIndex > 2) return;
-        if (activeQuarter === 'Q2' && (monthIndex < 3 || monthIndex > 5)) return;
-        if (activeQuarter === 'Q3' && (monthIndex < 6 || monthIndex > 8)) return;
-        if (activeQuarter === 'Q4' && monthIndex < 9) return;
+      let currentMonthName = "";
 
-        const monthCard = document.createElement('div');
-        monthCard.className = 'month-card';
+      for (let w = 1; w <= 52; w++) {
+        const weekDate = new Date(2027, 0, (w - 1) * 7 + 1);
+        const monthName = months[weekDate.getMonth()];
 
-        const header = document.createElement('div');
-        header.className = 'month-header';
-        header.innerText = monthName;
-        monthCard.appendChild(header);
+        if (monthName !== currentMonthName) {
+          currentMonthName = monthName;
+          const monthRow = document.createElement('tr');
+          monthRow.className = 'month-divider';
+          monthRow.innerHTML = `<td colspan="4">📅 ${currentMonthName} 2027</td>`;
+          tbody.appendChild(monthRow);
+        }
 
-        // Determine starting week number for this month
-        const firstDayOfMonth = new Date(2027, monthIndex, 1);
-        const lastDayOfMonth = new Date(2027, monthIndex + 1, 0);
-        const startW = getWeekNumber(`2027-${monthIndex + 1}-01`);
-        const endW = getWeekNumber(`2027-${monthIndex + 1}-${lastDayOfMonth.getDate()}`);
+        const tr = document.createElement('tr');
 
-        let hasEvents = false;
+        const tdWeek = document.createElement('td');
+        tdWeek.className = 'week-col-label';
+        tdWeek.innerHTML = `Week ${w} <span style="font-size:9px; color:#5f6368; font-weight:normal;">(${weekDate.getDate()} ${monthName.substring(0,3)})</span>`;
+        tr.appendChild(tdWeek);
 
-        for (let w = startW; w <= endW && w <= 52; w++) {
-          // Find cohorts active in week `w`
-          const activeInWeek = cohorts.filter(item => {
-            if (activeFilter !== 'All') {
-              const isLead = item.lead.includes(activeFilter);
-              const isSupport = item.support === activeFilter;
-              if (!isLead && !isSupport) return false;
-            }
+        ['GT', 'GE', 'GG'].forEach(prog => {
+          const td = document.createElement('td');
+          
+          const matching = cohorts.filter(item => {
+            if (item.programme !== prog) return false;
+            if (!isPersonInvolved(item, activeFilter)) return false;
+
             const sW = getWeekNumber(item.start);
             const eW = getWeekNumber(item.end);
             return w >= sW && w <= eW;
           });
 
-          if (activeInWeek.length > 0) {
-            hasEvents = true;
-            const weekRow = document.createElement('div');
-            weekRow.className = 'week-row';
-
-            const weekLabel = document.createElement('div');
-            weekLabel.className = 'week-label';
-            weekLabel.innerHTML = `<span>Week ${w}</span> <span style="color:#1a73e8; cursor:pointer;" onclick="openWeekModal(${w})">Details ➔</span>`;
-            weekRow.appendChild(weekLabel);
-
-            const barsContainer = document.createElement('div');
-            barsContainer.className = 'overlap-bars';
-
-            activeInWeek.forEach(item => {
-              const pill = document.createElement('div');
-              pill.className = `overlap-pill pill-${item.programme.toLowerCase()}`;
-              
+          if (matching.length === 0) {
+            td.innerHTML = `<span class="matrix-cell-empty">—</span>`;
+          } else {
+            matching.forEach(item => {
               let sess = `${item.leadSessions}s/wk`;
               if (activeFilter !== 'All' && item.support === activeFilter) {
                 sess = `${item.supportSessions}s/wk (Supp)`;
               }
 
-              pill.innerHTML = `<span>${item.id}</span> <span class="pill-meta">${item.lead} (${sess})</span>`;
-              barsContainer.appendChild(pill);
+              const block = document.createElement('div');
+              block.className = `matrix-block matrix-block-${prog.toLowerCase()}`;
+              block.innerHTML = `
+                <span>${item.id}</span>
+                <span class="matrix-meta">${item.lead} (${sess})</span>
+              `;
+              td.appendChild(block);
             });
-
-            weekRow.appendChild(barsContainer);
-            monthCard.appendChild(weekRow);
           }
-        }
 
-        if (!hasEvents) {
-          monthCard.innerHTML += `<div style="font-size:11px; color:#9aa0a6; text-align:center; padding-top:20px;">No Active Overlaps</div>`;
-        }
+          tr.appendChild(td);
+        });
 
-        grid.appendChild(monthCard);
-      });
-    }
-
-    function openWeekModal(weekNum) {
-      const modal = document.getElementById('month-modal');
-      const title = document.getElementById('modal-title');
-      const body = document.getElementById('modal-body');
-
-      title.innerText = `Week ${weekNum} 2027 - Detailed Overlap`;
-      body.innerHTML = '';
-
-      const activeInWeek = cohorts.filter(item => {
-        const sW = getWeekNumber(item.start);
-        const eW = getWeekNumber(item.end);
-        return weekNum >= sW && weekNum <= eW;
-      });
-
-      activeInWeek.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'detail-item';
-        div.innerHTML = `
-          <div style="font-weight:bold; font-size:13px; color:#1a73e8; margin-bottom:4px;">${item.id} (${item.programme})</div>
-          <div><strong>Dates:</strong> ${item.start} to ${item.end}</div>
-          <div><strong>Lead Instructor:</strong> ${item.lead} (${item.leadSessions} sessions/wk)</div>
-          <div><strong>Support Instructor:</strong> ${item.support} (${item.supportSessions} sessions/wk)</div>
-        `;
-        body.appendChild(div);
-      });
-
-      modal.style.display = 'flex';
-    }
-
-    function closeModal() {
-      document.getElementById('month-modal').style.display = 'none';
+        tbody.appendChild(tr);
+      }
     }
 
     function renderAll() {
       renderGantt();
       renderCharts();
-      renderCalendar();
+      renderMatrix();
     }
 
     initHeader();
