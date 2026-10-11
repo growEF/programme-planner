@@ -139,9 +139,9 @@
   </div>
 
   <script>
-    let activeFilter = 'All';
+    var activeFilter = 'All';
 
-    let cohorts = [
+    var cohorts = [
       { id: 'GT1', programme: 'GT', start: '2027-02-15', end: '2027-03-12', lead: 'Dave', leadSessions: 3, support: 'Jamie', supportSessions: 0 },
       { id: 'GT2', programme: 'GT', start: '2027-03-01', end: '2027-03-26', lead: 'Jamie', leadSessions: 3, support: 'Dave', supportSessions: 0 },
       { id: 'GT3', programme: 'GT', start: '2027-04-19', end: '2027-05-14', lead: 'Dave', leadSessions: 3, support: 'Jamie', supportSessions: 0 },
@@ -153,70 +153,71 @@
       { id: 'GE3', programme: 'GE', start: '2027-09-20', end: '2027-11-26', lead: 'Dave and Jamie', leadSessions: 1, support: 'None', supportSessions: 0 }
     ];
 
-    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     
     function parseDate(str) {
       if(!str) return new Date();
-      const parts = str.split('-');
-      return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+      var parts = str.split('-');
+      return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
     }
 
-    const yearStart = parseDate("2027-01-01").getTime();
-    const yearEnd = parseDate("2027-12-31").getTime();
-    const totalYearMs = yearEnd - yearStart;
+    var yearStart = parseDate("2027-01-01").getTime();
+    var yearEnd = parseDate("2027-12-31").getTime();
+    var totalYearMs = yearEnd - yearStart;
 
     function initHeader() {
-      const header = document.getElementById('weeks-header');
+      var header = document.getElementById('weeks-header');
+      if(!header) return;
       header.innerHTML = '<div style="text-align: left;">Cohort</div>';
-      for (let i = 1; i <= 52; i++) {
-        const div = document.createElement('div');
-        div.innerText = `W${i}`;
+      for (var i = 1; i <= 52; i++) {
+        var div = document.createElement('div');
+        div.innerText = 'W' + i;
         header.appendChild(div);
       }
     }
 
     function renderSidebar() {
-      const container = document.getElementById('sidebar-controls');
+      var container = document.getElementById('sidebar-controls');
+      if(!container) return;
       container.innerHTML = '';
 
-      cohorts.forEach((item, index) => {
-        const card = document.createElement('div');
+      cohorts.forEach(function(item, index) {
+        var card = document.createElement('div');
         card.className = 'cohort-card';
-        card.innerHTML = `
-          <h4>${item.id} (${item.programme})</h4>
-          <div class="form-group">
-            <div class="form-row">
-              <div><label>Start</label><input type="date" value="${item.start}" onchange="updateCohort(${index}, 'start', this.value)"></div>
-              <div><label>End</label><input type="date" value="${item.end}" onchange="updateCohort(${index}, 'end', this.value)"></div>
-            </div>
-          </div>
-          <div class="form-group">
-            <div class="form-row">
-              <div>
-                <label>Lead</label>
-                <select onchange="updateCohort(${index}, 'lead', this.value)">
-                  <option value="Dave" ${item.lead === 'Dave' ? 'selected' : ''}>Dave</option>
-                  <option value="Jamie" ${item.lead === 'Jamie' ? 'selected' : ''}>Jamie</option>
-                  <option value="Dave and Jamie" ${item.lead === 'Dave and Jamie' ? 'selected' : ''}>Dave & Jamie</option>
-                </select>
-              </div>
-              <div><label>Lead Sess/Wk</label><input type="number" min="0" max="5" value="${item.leadSessions}" onchange="updateCohort(${index}, 'leadSessions', parseInt(this.value))"></div>
-            </div>
-          </div>
-          <div class="form-group">
-            <div class="form-row">
-              <div>
-                <label>Support</label>
-                <select onchange="updateCohort(${index}, 'support', this.value)">
-                  <option value="None" ${item.support === 'None' ? 'selected' : ''}>None</option>
-                  <option value="Dave" ${item.support === 'Dave' ? 'selected' : ''}>Dave</option>
-                  <option value="Jamie" ${item.support === 'Jamie' ? 'selected' : ''}>Jamie</option>
-                </select>
-              </div>
-              <div><label>Supp Sess/Wk</label><input type="number" min="0" max="5" value="${item.supportSessions}" onchange="updateCohort(${index}, 'supportSessions', parseInt(this.value))"></div>
-            </div>
-          </div>
-        `;
+        card.innerHTML = 
+          '<h4>' + item.id + ' (' + item.programme + ')</h4>' +
+          '<div class="form-group">' +
+            '<div class="form-row">' +
+              '<div><label>Start</label><input type="date" value="' + item.start + '" onchange="updateCohort(' + index + ', \'start\', this.value)"></div>' +
+              '<div><label>End</label><input type="date" value="' + item.end + '" onchange="updateCohort(' + index + ', \'end\', this.value)"></div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<div class="form-row">' +
+              '<div>' +
+                '<label>Lead</label>' +
+                '<select onchange="updateCohort(' + index + ', \'lead\', this.value)">' +
+                  '<option value="Dave"' + (item.lead === 'Dave' ? ' selected' : '') + '>Dave</option>' +
+                  '<option value="Jamie"' + (item.lead === 'Jamie' ? ' selected' : '') + '>Jamie</option>' +
+                  '<option value="Dave and Jamie"' + (item.lead === 'Dave and Jamie' ? ' selected' : '') + '>Dave &amp; Jamie</option>' +
+                '</select>' +
+              '</div>' +
+              '<div><label>Lead Sess/Wk</label><input type="number" min="0" max="5" value="' + item.leadSessions + '" onchange="updateCohort(' + index + ', \'leadSessions\', parseInt(this.value, 10))"></div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<div class="form-row">' +
+              '<div>' +
+                '<label>Support</label>' +
+                '<select onchange="updateCohort(' + index + ', \'support\', this.value)">' +
+                  '<option value="None"' + (item.support === 'None' ? ' selected' : '') + '>None</option>' +
+                  '<option value="Dave"' + (item.support === 'Dave' ? ' selected' : '') + '>Dave</option>' +
+                  '<option value="Jamie"' + (item.support === 'Jamie' ? ' selected' : '') + '>Jamie</option>' +
+                '</select>' +
+              '</div>' +
+              '<div><label>Supp Sess/Wk</label><input type="number" min="0" max="5" value="' + item.supportSessions + '" onchange="updateCohort(' + index + ', \'supportSessions\', parseInt(this.value, 10))"></div>' +
+            '</div>' +
+          '</div>';
         container.appendChild(card);
       });
     }
@@ -228,57 +229,59 @@
 
     function isPersonInvolved(item, person) {
       if (person === 'All') return true;
-      const isLead = item.lead.includes(person);
-      const isSupport = item.support === person && item.supportSessions > 0;
+      var isLead = item.lead.indexOf(person) !== -1;
+      var isSupport = item.support === person && item.supportSessions > 0;
       return isLead || isSupport;
     }
 
     function setFilter(filter, btn) {
       activeFilter = filter;
-      document.querySelectorAll('.controls-card .btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+      var buttons = document.querySelectorAll('.controls-card .btn');
+      buttons.forEach(function(b) { b.classList.remove('active'); });
+      if(btn) btn.classList.add('active');
       renderAll();
     }
 
     function getWeekNumber(dateStr) {
-      const d = parseDate(dateStr);
-      const start = new Date(d.getFullYear(), 0, 1);
+      var d = parseDate(dateStr);
+      var start = new Date(d.getFullYear(), 0, 1);
       return Math.ceil((((d - start) / 86400000) + start.getDay() + 1) / 7);
     }
 
     /* 1. GANTT RENDER */
     function renderGantt() {
-      const container = document.getElementById('gantt-rows');
+      var container = document.getElementById('gantt-rows');
+      if(!container) return;
       container.innerHTML = '';
 
-      cohorts.forEach(item => {
+      cohorts.forEach(function(item) {
         if (!isPersonInvolved(item, activeFilter)) return;
 
-        const row = document.createElement('div');
+        var row = document.createElement('div');
         row.className = 'programme-row';
 
-        const label = document.createElement('div');
+        var label = document.createElement('div');
         label.className = 'row-label';
         label.innerText = item.id;
 
-        const track = document.createElement('div');
+        var track = document.createElement('div');
         track.className = 'track-container';
 
-        const grid = document.createElement('div');
+        var grid = document.createElement('div');
         grid.className = 'week-grid-lines';
-        for (let i = 0; i < 52; i++) grid.appendChild(document.createElement('div'));
+        for (var i = 0; i < 52; i++) grid.appendChild(document.createElement('div'));
         track.appendChild(grid);
 
-        const sTime = parseDate(item.start).getTime();
-        const eTime = parseDate(item.end).getTime();
+        var sTime = parseDate(item.start).getTime();
+        var eTime = parseDate(item.end).getTime();
 
-        const leftPercent = ((sTime - yearStart) / totalYearMs) * 100;
-        const widthPercent = ((eTime - sTime) / totalYearMs) * 100;
+        var leftPercent = ((sTime - yearStart) / totalYearMs) * 100;
+        var widthPercent = ((eTime - sTime) / totalYearMs) * 100;
 
-        const block = document.createElement('div');
-        block.className = `block bg-${item.programme}`;
-        block.style.left = `${Math.max(0, leftPercent)}%`;
-        block.style.width = `${Math.min(100 - leftPercent, widthPercent)}%`;
+        var block = document.createElement('div');
+        block.className = 'block bg-' + item.programme;
+        block.style.left = Math.max(0, leftPercent) + '%';
+        block.style.width = Math.min(100 - leftPercent, widthPercent) + '%';
         block.innerText = item.id;
 
         track.appendChild(block);
@@ -289,16 +292,4 @@
     }
 
     /* 2. WORKLOAD RENDER */
-    function calculateWorkload(person) {
-      const weeklyTotals = new Array(53).fill(0);
-
-      cohorts.forEach(item => {
-        const startW = getWeekNumber(item.start);
-        const endW = getWeekNumber(item.end);
-
-        let sessions = 0;
-        if (item.lead.includes(person)) sessions += item.leadSessions;
-        if (item.support === person) sessions += item.supportSessions;
-
-        if (sessions > 0) {
-          for (let w = startW; w <= endW && w <= 52; w++)
+    function calculateWorkload(
