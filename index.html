@@ -8,7 +8,7 @@
     body { font-family: Arial, sans-serif; margin: 0; background-color: #f8f9fa; color: #202124; display: flex; height: 100vh; overflow: hidden; }
 
     /* Sidebar Controls */
-    .sidebar { width: 330px; background: #ffffff; border-right: 1px solid #dadce0; padding: 16px; overflow-y: auto; flex-shrink: 0; }
+    .sidebar { width: 320px; background: #ffffff; border-right: 1px solid #dadce0; padding: 16px; overflow-y: auto; flex-shrink: 0; }
     .sidebar h2 { font-size: 15px; margin-top: 0; margin-bottom: 12px; color: #1a73e8; }
     .cohort-card { background: #f8f9fa; border: 1px solid #dadce0; border-radius: 6px; padding: 10px; margin-bottom: 10px; }
     .cohort-card h4 { margin: 0 0 6px 0; font-size: 12px; color: #202124; display: flex; justify-content: space-between; }
@@ -30,8 +30,8 @@
 
     /* Visual 1: Gantt Timeline */
     .gantt-card { background: #ffffff; border: 1px solid #dadce0; border-radius: 8px; padding: 16px; margin-bottom: 24px; overflow-x: auto; }
-    .weeks-header { display: grid; grid-template-columns: 80px repeat(52, 1fr); border-bottom: 2px solid #e8eaed; padding-bottom: 6px; font-size: 10px; font-weight: bold; text-align: center; color: #5f6368; }
-    .programme-row { display: grid; grid-template-columns: 80px 1fr; align-items: center; padding: 6px 0; border-bottom: 1px solid #f1f3f4; }
+    .weeks-header { display: grid; grid-template-columns: 80px repeat(52, 1fr); border-bottom: 2px solid #e8eaed; padding-bottom: 6px; font-size: 10px; font-weight: bold; text-align: center; color: #5f6368; min-width: 800px; }
+    .programme-row { display: grid; grid-template-columns: 80px 1fr; align-items: center; padding: 6px 0; border-bottom: 1px solid #f1f3f4; min-width: 800px; }
     .row-label { font-weight: bold; font-size: 12px; color: #3c4043; }
     
     .track-container { position: relative; height: 26px; background-color: #f1f3f4; border-radius: 4px; }
@@ -50,7 +50,7 @@
     .badge-dave { background-color: #1a73e8; }
     .badge-jamie { background-color: #1e8e3e; }
 
-    .chart-grid { display: grid; grid-template-columns: repeat(52, 1fr); gap: 2px; align-items: flex-end; height: 80px; border-bottom: 2px solid #dadce0; padding-bottom: 4px; }
+    .chart-grid { display: grid; grid-template-columns: repeat(52, 1fr); gap: 2px; align-items: flex-end; height: 80px; border-bottom: 2px solid #dadce0; padding-bottom: 4px; min-width: 800px; }
     .bar-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; position: relative; }
     .bar { width: 100%; border-radius: 2px 2px 0 0; }
     .bar-col .tooltip { display: none; position: absolute; bottom: 105%; left: 50%; transform: translateX(-50%); background-color: #202124; color: #ffffff; padding: 4px 6px; border-radius: 4px; font-size: 9px; white-space: nowrap; z-index: 10; }
@@ -127,7 +127,7 @@
       <div class="chart-grid" id="jamie-chart"></div>
     </div>
 
-    <!-- VISUAL 3: MONTHLY CALENDAR WITH QUARTER / MONTH DRILL-DOWN -->
+    <!-- VISUAL 3: MONTHLY CALENDAR -->
     <div class="calendar-card">
       <div class="calendar-toolbar">
         <div class="section-title" style="margin-bottom:0;">3. 12-Month Calendar Overview (Click a month to zoom in)</div>
@@ -172,12 +172,20 @@
     ];
 
     const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    const yearStart = new Date("2027-01-01T00:00:00").getTime();
-    const yearEnd = new Date("2027-12-31T23:59:59").getTime();
+    
+    function parseDate(str) {
+      if(!str) return new Date();
+      const parts = str.split('-');
+      return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    }
+
+    const yearStart = parseDate("2027-01-01").getTime();
+    const yearEnd = parseDate("2027-12-31").getTime();
     const totalYearMs = yearEnd - yearStart;
 
     function initHeader() {
       const header = document.getElementById('weeks-header');
+      header.innerHTML = '<div style="text-align: left;">Cohort</div>';
       for (let i = 1; i <= 52; i++) {
         const div = document.createElement('div');
         div.innerText = `W${i}`;
@@ -251,12 +259,11 @@
     }
 
     function getWeekNumber(dateStr) {
-      const d = new Date(dateStr);
+      const d = parseDate(dateStr);
       const start = new Date(d.getFullYear(), 0, 1);
       return Math.ceil((((d - start) / 86400000) + start.getDay() + 1) / 7);
     }
 
-    /* 1. GANTT CHART */
     function renderGantt() {
       const container = document.getElementById('gantt-rows');
       container.innerHTML = '';
@@ -283,8 +290,8 @@
         for (let i = 0; i < 52; i++) grid.appendChild(document.createElement('div'));
         track.appendChild(grid);
 
-        const sTime = new Date(item.start + "T00:00:00").getTime();
-        const eTime = new Date(item.end + "T23:59:59").getTime();
+        const sTime = parseDate(item.start).getTime();
+        const eTime = parseDate(item.end).getTime();
 
         const leftPercent = ((sTime - yearStart) / totalYearMs) * 100;
         const widthPercent = ((eTime - sTime) / totalYearMs) * 100;
@@ -302,7 +309,6 @@
       });
     }
 
-    /* 2. WORKLOAD CHARTS */
     function calculateWorkload(person) {
       const weeklyTotals = new Array(53).fill(0);
 
@@ -339,25 +345,23 @@
         dCol.className = 'bar-col';
         const dCount = daveData[w];
         const dClass = dCount >= 5 ? 'load-5' : `load-${dCount}`;
-        dCol.innerHTML = `<div class="bar ${dClass}"></div><div class="tooltip">W${w}:${dCount} Sessions</div>`;
+        dCol.innerHTML = `<div class="bar ${dClass}"></div><div class="tooltip">W${w}: ${dCount} Sessions</div>`;
         daveContainer.appendChild(dCol);
 
         const jCol = document.createElement('div');
         jCol.className = 'bar-col';
         const jCount = jamieData[w];
         const jClass = jCount >= 5 ? 'load-5' : `load-${jCount}`;
-        jCol.innerHTML = `<div class="bar ${jClass}"></div><div class="tooltip">W${w}:${jCount} Sessions</div>`;
+        jCol.innerHTML = `<div class="bar ${jClass}"></div><div class="tooltip">W${w}: ${jCount} Sessions</div>`;
         jamieContainer.appendChild(jCol);
       }
     }
 
-    /* 3. CALENDAR GRID WITH QUARTER FILTER */
     function renderCalendar() {
       const grid = document.getElementById('calendar-grid');
       grid.innerHTML = '';
 
       months.forEach((monthName, monthIndex) => {
-        // Quarter Filter Logic
         if (activeQuarter === 'Q1' && monthIndex > 2) return;
         if (activeQuarter === 'Q2' && (monthIndex < 3 || monthIndex > 5)) return;
         if (activeQuarter === 'Q3' && (monthIndex < 6 || monthIndex > 8)) return;
@@ -382,8 +386,8 @@
             if (!isLead && !isSupport) return;
           }
 
-          const sDate = new Date(item.start);
-          const eDate = new Date(item.end);
+          const sDate = parseDate(item.start);
+          const eDate = parseDate(item.end);
 
           if (monthIndex >= sDate.getMonth() && monthIndex <= eDate.getMonth()) {
             const ev = document.createElement('div');
@@ -411,7 +415,6 @@
       });
     }
 
-    /* MONTH DRILL-DOWN MODAL */
     function openMonthModal(mIdx) {
       const modal = document.getElementById('month-modal');
       const title = document.getElementById('modal-title');
@@ -421,8 +424,8 @@
       body.innerHTML = '';
 
       const activeCohorts = cohorts.filter(item => {
-        const sM = new Date(item.start).getMonth();
-        const eM = new Date(item.end).getMonth();
+        const sM = parseDate(item.start).getMonth();
+        const eM = parseDate(item.end).getMonth();
         return mIdx >= sM && mIdx <= eM;
       });
 
@@ -433,4 +436,31 @@
           const div = document.createElement('div');
           div.className = 'detail-item';
           div.innerHTML = `
-            <div style="font-weight:bold; font-size:13px; color:#1a73e8; margin-bottom:4px;">${item.
+            <div style="font-weight:bold; font-size:13px; color:#1a73e8; margin-bottom:4px;">${item.id} (${item.programme})</div>
+            <div><strong>Dates:</strong> ${item.start} to ${item.end}</div>
+            <div><strong>Lead Instructor:</strong> ${item.lead} (${item.leadSessions} sessions/wk)</div>
+            <div><strong>Support Instructor:</strong> ${item.support} (${item.supportSessions} sessions/wk)</div>
+          `;
+          body.appendChild(div);
+        });
+      }
+
+      modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('month-modal').style.display = 'none';
+    }
+
+    function renderAll() {
+      renderGantt();
+      renderCharts();
+      renderCalendar();
+    }
+
+    initHeader();
+    renderSidebar();
+    renderAll();
+  </script>
+</body>
+</html>
