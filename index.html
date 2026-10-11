@@ -5,327 +5,432 @@
   <title>2027 Interactive Programme Planner</title>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; margin: 24px; background-color: #f8f9fa; color: #202124; line-height: 1.4; }
+    body { font-family: Arial, sans-serif; margin: 0; background-color: #f8f9fa; color: #202124; display: flex; height: 100vh; overflow: hidden; }
 
-    h2 { font-size: 18px; color: #1a73e8; margin-bottom: 4px; }
-    p.subtitle { color: #5f6368; font-size: 13px; margin-top: 0; margin-bottom: 20px; }
+    /* Sidebar Controls */
+    .sidebar { width: 330px; background: #ffffff; border-right: 1px solid #dadce0; padding: 16px; overflow-y: auto; flex-shrink: 0; }
+    .sidebar h2 { font-size: 15px; margin-top: 0; margin-bottom: 12px; color: #1a73e8; }
+    .cohort-card { background: #f8f9fa; border: 1px solid #dadce0; border-radius: 6px; padding: 10px; margin-bottom: 10px; }
+    .cohort-card h4 { margin: 0 0 6px 0; font-size: 12px; color: #202124; display: flex; justify-content: space-between; }
+    .form-group { margin-bottom: 6px; }
+    .form-group label { display: block; font-size: 10px; font-weight: bold; color: #5f6368; margin-bottom: 2px; }
+    .form-row { display: flex; gap: 6px; }
+    input[type="date"], select, input[type="number"] { width: 100%; padding: 4px; font-size: 11px; border: 1px solid #dadce0; border-radius: 4px; }
 
-    /* Radio Button Filtering Logic (CSS Only) */
-    input[type="radio"] { display: none; }
+    /* Main Dashboard Area */
+    .main-content { flex: 1; padding: 20px; overflow-y: auto; }
+    
+    /* Top Toggles */
+    .controls-card { background: #ffffff; border: 1px solid #dadce0; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .btn { padding: 6px 14px; border: 1px solid #dadce0; border-radius: 16px; background: #ffffff; cursor: pointer; font-size: 12px; font-weight: bold; color: #3c4043; transition: all 0.15s ease; }
+    .btn.active { background-color: #1a73e8; color: #ffffff; border-color: #1a73e8; }
+    .btn-sub { padding: 4px 10px; font-size: 11px; border-radius: 12px; }
 
-    .controls-card {
-      background: #ffffff; border: 1px solid #dadce0; border-radius: 8px;
-      padding: 12px 16px; margin-bottom: 24px; display: flex; gap: 10px; align-items: center;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-    .btn-label {
-      padding: 6px 14px; border: 1px solid #dadce0; border-radius: 16px;
-      background: #ffffff; cursor: pointer; font-size: 12px; font-weight: bold; color: #3c4043;
-      user-select: none;
-    }
-
-    #view-all:checked ~ .controls-card label[for="view-all"],
-    #view-dave:checked ~ .controls-card label[for="view-dave"],
-    #view-jamie:checked ~ .controls-card label[for="view-jamie"] {
-      background-color: #1a73e8; color: #ffffff; border-color: #1a73e8;
-    }
-
-    /* Filter Rows Dynamically via Pure CSS */
-    #view-dave:checked ~ .main-content .row-jamie-only { display: none !important; }
-    #view-jamie:checked ~ .main-content .row-dave-only { display: none !important; }
-
-    /* Layout Containers */
-    .section-card {
-      background: #ffffff; border: 1px solid #dadce0; border-radius: 8px;
-      padding: 16px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
     .section-title { font-size: 14px; font-weight: bold; color: #3c4043; margin-top: 0; margin-bottom: 12px; }
 
-    /* 1. GANTT TIMELINE */
-    .gantt-overflow { overflow-x: auto; }
-    .weeks-header {
-      display: grid; grid-template-columns: 80px repeat(52, 1fr);
-      border-bottom: 2px solid #e8eaed; padding-bottom: 6px; font-size: 10px; font-weight: bold; text-align: center; color: #5f6368;
-    }
-    .programme-row {
-      display: grid; grid-template-columns: 80px 1fr; align-items: center;
-      padding: 6px 0; border-bottom: 1px solid #f1f3f4;
-    }
+    /* Visual 1: Gantt Timeline */
+    .gantt-card { background: #ffffff; border: 1px solid #dadce0; border-radius: 8px; padding: 16px; margin-bottom: 24px; overflow-x: auto; }
+    .weeks-header { display: grid; grid-template-columns: 80px repeat(52, 1fr); border-bottom: 2px solid #e8eaed; padding-bottom: 6px; font-size: 10px; font-weight: bold; text-align: center; color: #5f6368; }
+    .programme-row { display: grid; grid-template-columns: 80px 1fr; align-items: center; padding: 6px 0; border-bottom: 1px solid #f1f3f4; }
     .row-label { font-weight: bold; font-size: 12px; color: #3c4043; }
-
+    
     .track-container { position: relative; height: 26px; background-color: #f1f3f4; border-radius: 4px; }
-    .week-grid-lines {
-      position: absolute; top:0; left:0; right:0; bottom:0;
-      display: grid; grid-template-columns: repeat(52, 1fr); pointer-events: none;
-    }
+    .week-grid-lines { position: absolute; top:0; left:0; right:0; bottom:0; display: grid; grid-template-columns: repeat(52, 1fr); pointer-events: none; }
     .week-grid-lines div { border-right: 1px dashed #e8eaed; }
 
-    .block {
-      position: absolute; height: 18px; top: 4px; color: #ffffff;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 10px; font-weight: bold; border-radius: 3px; z-index: 2;
-    }
+    .block { position: absolute; height: 18px; top: 4px; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; border-radius: 3px; z-index: 2; }
     .bg-GT { background-color: #1a73e8; }
     .bg-GE { background-color: #1e8e3e; }
+    .bg-GG { background-color: #d93025; }
 
-    /* Tooltip styling */
-    .tooltip {
-      display: none; position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%);
-      background-color: #202124; color: #ffffff; padding: 4px 8px; border-radius: 4px;
-      font-size: 10px; white-space: nowrap; z-index: 10; font-weight: normal;
-    }
-    .block:hover .tooltip { display: block; }
-
-    /* 2. WORKLOAD BAR CHARTS */
-    .chart-title { font-size: 13px; font-weight: bold; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    /* Visual 2: Workload Charts */
+    .chart-card { background: #ffffff; border: 1px solid #dadce0; border-radius: 8px; padding: 16px; margin-bottom: 24px; }
+    .chart-title { font-size: 13px; font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
     .badge { padding: 2px 8px; border-radius: 10px; font-size: 10px; color: white; font-weight: bold; }
     .badge-dave { background-color: #1a73e8; }
     .badge-jamie { background-color: #1e8e3e; }
 
-    .chart-grid {
-      display: grid; grid-template-columns: repeat(52, 1fr); gap: 2px;
-      align-items: flex-end; height: 75px; border-bottom: 2px solid #dadce0; padding-bottom: 4px;
-    }
+    .chart-grid { display: grid; grid-template-columns: repeat(52, 1fr); gap: 2px; align-items: flex-end; height: 80px; border-bottom: 2px solid #dadce0; padding-bottom: 4px; }
     .bar-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; position: relative; }
     .bar { width: 100%; border-radius: 2px 2px 0 0; }
+    .bar-col .tooltip { display: none; position: absolute; bottom: 105%; left: 50%; transform: translateX(-50%); background-color: #202124; color: #ffffff; padding: 4px 6px; border-radius: 4px; font-size: 9px; white-space: nowrap; z-index: 10; }
     .bar-col:hover .tooltip { display: block; }
 
     .load-0 { height: 2px; background-color: #e8eaed; }
-    .load-1 { height: 25%; background-color: #8ab4f8; }
-    .load-2 { height: 50%; background-color: #4285f4; }
-    .load-3 { height: 75%; background-color: #fbbc04; }
-    .load-4 { height: 100%; background-color: #ea4335; }
+    .load-1 { height: 20%; background-color: #8ab4f8; }
+    .load-2 { height: 40%; background-color: #4285f4; }
+    .load-3 { height: 60%; background-color: #fbbc04; }
+    .load-4 { height: 80%; background-color: #ea4335; }
+    .load-5 { height: 100%; background-color: #b31412; }
 
-    /* 3. 12-MONTH CALENDAR OVERVIEW */
+    /* Visual 3: Calendar Year View */
+    .calendar-card { background: #ffffff; border: 1px solid #dadce0; border-radius: 8px; padding: 16px; margin-bottom: 24px; }
+    .calendar-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
     .calendar-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .month-card { border: 1px solid #dadce0; border-radius: 6px; background: #fafafa; padding: 10px; min-height: 110px; }
-    .month-header { font-size: 12px; font-weight: bold; color: #1a73e8; border-bottom: 1px solid #e8eaed; padding-bottom: 4px; margin-bottom: 8px; text-align: center; }
+    
+    .month-card { border: 1px solid #dadce0; border-radius: 6px; background: #fafafa; padding: 10px; min-height: 120px; cursor: pointer; transition: transform 0.1s, box-shadow 0.1s; }
+    .month-card:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); border-color: #1a73e8; }
+    .month-header { font-size: 12px; font-weight: bold; color: #1a73e8; border-bottom: 1px solid #e8eaed; padding-bottom: 4px; margin-bottom: 8px; text-align: center; display: flex; justify-content: space-between; align-items: center; }
     .month-events { display: flex; flex-direction: column; gap: 4px; }
-    .cal-event {
-      font-size: 10px; padding: 4px 6px; border-radius: 4px; color: #ffffff; font-weight: bold;
-      display: flex; justify-content: space-between; align-items: center;
-    }
+    .cal-event { font-size: 10px; padding: 4px 6px; border-radius: 4px; color: #ffffff; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
     .cal-event-gt { background-color: #1a73e8; }
     .cal-event-ge { background-color: #1e8e3e; }
-    .cal-meta { font-size: 9px; font-weight: normal; opacity: 0.9; }
+    .cal-event-gg { background-color: #d93025; }
+    .cal-event-meta { font-size: 9px; font-weight: normal; opacity: 0.95; }
+
+    /* Drill-down Modal */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+    .modal-card { background: #ffffff; border-radius: 8px; width: 500px; max-width: 90%; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #dadce0; padding-bottom: 10px; margin-bottom: 16px; }
+    .modal-header h3 { margin: 0; font-size: 16px; color: #1a73e8; }
+    .close-btn { cursor: pointer; font-size: 18px; font-weight: bold; color: #5f6368; }
+    .modal-body { max-height: 350px; overflow-y: auto; }
+    .detail-item { background: #f8f9fa; border: 1px solid #dadce0; border-radius: 6px; padding: 10px; margin-bottom: 8px; font-size: 12px; }
+    .detail-item strong { color: #202124; }
   </style>
 </head>
 <body>
 
-  <!-- CSS Control Inputs -->
-  <input type="radio" id="view-all" name="view-master" checked>
-  <input type="radio" id="view-dave" name="view-master">
-  <input type="radio" id="view-jamie" name="view-master">
-
-  <h2>2027 Programme Year Plan Overview</h2>
-  <p class="subtitle">Pure HTML & CSS Visualizer. Use the buttons below to switch viewpoints without any script dependency.</p>
-
-  <!-- MASTER TOGGLES -->
-  <div class="controls-card">
-    <span style="font-size: 12px; font-weight: bold; color: #3c4043;">Viewpoint Filter:</span>
-    <label for="view-all" class="btn-label">All Programmes</label>
-    <label for="view-dave" class="btn-label">Dave's Viewpoint</label>
-    <label for="view-jamie" class="btn-label">Jamie's Viewpoint</label>
+  <!-- SIDEBAR CONTROLS -->
+  <div class="sidebar">
+    <h2>Cohort Settings & Roles</h2>
+    <div id="sidebar-controls"></div>
   </div>
 
+  <!-- MAIN CONTENT AREA -->
   <div class="main-content">
 
+    <!-- MASTER TOGGLES -->
+    <div class="controls-card">
+      <span style="font-size: 12px; font-weight: bold;">Viewpoint:</span>
+      <button class="btn active" onclick="setFilter('All', this)">All Programmes</button>
+      <button class="btn" onclick="setFilter('Dave', this)">Dave's View</button>
+      <button class="btn" onclick="setFilter('Jamie', this)">Jamie's View</button>
+    </div>
+
     <!-- VISUAL 1: GANTT CHART -->
-    <div class="section-card gantt-overflow">
-      <div class="section-title">1. Gantt Timeline Overview (52 Weeks)</div>
-      
-      <div class="weeks-header">
+    <div class="gantt-card">
+      <div class="section-title">1. Master Gantt Timeline (52 Weeks)</div>
+      <div class="weeks-header" id="weeks-header">
         <div style="text-align: left;">Cohort</div>
-        <div>W1</div><div>W2</div><div>W3</div><div>W4</div><div>W5</div><div>W6</div><div>W7</div><div>W8</div><div>W9</div><div>W10</div>
-        <div>W11</div><div>W12</div><div>W13</div><div>W14</div><div>W15</div><div>W16</div><div>W17</div><div>W18</div><div>W19</div><div>W20</div>
-        <div>W21</div><div>W22</div><div>W23</div><div>W24</div><div>W25</div><div>W26</div><div>W27</div><div>W28</div><div>W29</div><div>W30</div>
-        <div>W31</div><div>W32</div><div>W33</div><div>W34</div><div>W35</div><div>W36</div><div>W37</div><div>W38</div><div>W39</div><div>W40</div>
-        <div>W41</div><div>W42</div><div>W43</div><div>W44</div><div>W45</div><div>W46</div><div>W47</div><div>W48</div><div>W49</div><div>W50</div>
-        <div>W51</div><div>W52</div>
       </div>
-
-      <!-- GT Rows -->
-      <div class="programme-row row-dave-only">
-        <div class="row-label">GT1</div>
-        <div class="track-container">
-          <div class="week-grid-lines"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
-          <div class="block bg-GT" style="left: 12.6%; width: 7.4%;">GT1<div class="tooltip">GT1 (Dave) - 3 Sessions/wk</div></div>
-        </div>
-      </div>
-
-      <div class="programme-row row-jamie-only">
-        <div class="row-label">GT2</div>
-        <div class="track-container">
-          <div class="week-grid-lines"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
-          <div class="block bg-GT" style="left: 16.4%; width: 7.1%;">GT2<div class="tooltip">GT2 (Jamie) - 3 Sessions/wk</div></div>
-        </div>
-      </div>
-
-      <div class="programme-row row-dave-only">
-        <div class="row-label">GT3</div>
-        <div class="track-container">
-          <div class="week-grid-lines"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
-          <div class="block bg-GT" style="left: 29.8%; width: 7.1%;">GT3<div class="tooltip">GT3 (Dave) - 3 Sessions/wk</div></div>
-        </div>
-      </div>
-
-      <div class="programme-row row-jamie-only">
-        <div class="row-label">GT4</div>
-        <div class="track-container">
-          <div class="week-grid-lines"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
-          <div class="block bg-GT" style="left: 39.4%; width: 7.1%;">GT4<div class="tooltip">GT4 (Jamie) - 3 Sessions/wk</div></div>
-        </div>
-      </div>
-
-      <div class="programme-row row-dave-only">
-        <div class="row-label">GT5</div>
-        <div class="track-container">
-          <div class="week-grid-lines"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
-          <div class="block bg-GT" style="left: 54.8%; width: 7.1%;">GT5<div class="tooltip">GT5 (Dave) - 3 Sessions/wk</div></div>
-        </div>
-      </div>
-
-      <div class="programme-row row-jamie-only">
-        <div class="row-label">GT6</div>
-        <div class="track-container">
-          <div class="week-grid-lines"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
-          <div class="block bg-GT" style="left: 64.3%; width: 7.1%;">GT6<div class="tooltip">GT6 (Jamie) - 3 Sessions/wk</div></div>
-        </div>
-      </div>
-
-      <!-- GE Rows -->
-      <div class="programme-row">
-        <div class="row-label">GE1</div>
-        <div class="track-container">
-          <div class="week-grid-lines"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
-          <div class="block bg-GE" style="left: 26.0%; width: 18.3%;">GE1<div class="tooltip">GE1 (Dave & Jamie) - 1 Session/wk</div></div>
-        </div>
-      </div>
-
-      <div class="programme-row">
-        <div class="row-label">GE2</div>
-        <div class="track-container">
-          <div class="week-grid-lines"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
-          <div class="block bg-GE" style="left: 49.0%; width: 18.3%;">GE2<div class="tooltip">GE2 (Dave & Jamie) - 1 Session/wk</div></div>
-        </div>
-      </div>
-
-      <div class="programme-row">
-        <div class="row-label">GE3</div>
-        <div class="track-container">
-          <div class="week-grid-lines"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
-          <div class="block bg-GE" style="left: 72.0%; width: 18.3%;">GE3<div class="tooltip">GE3 (Dave & Jamie) - 1 Session/wk</div></div>
-        </div>
-      </div>
+      <div id="gantt-rows"></div>
     </div>
 
     <!-- VISUAL 2: WORKLOAD CHARTS -->
-    <div class="section-card">
+    <div class="chart-card">
       <div class="section-title">2. Leader Weekly Session Workload</div>
+      <div class="chart-title">Dave <span class="badge badge-dave">Weekly Sessions</span></div>
+      <div class="chart-grid" id="dave-chart"></div>
       
-      <div class="row-dave-only" style="margin-bottom: 16px;">
-        <div class="chart-title">Dave <span class="badge badge-dave">Weekly Sessions</span></div>
-        <div class="chart-grid">
-          <!-- Sample 52-week bars for Dave -->
-          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W1: 0</div></div>
-          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W2: 0</div></div>
-          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W3: 0</div></div>
-          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W4: 0</div></div>
-          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W5: 0</div></div>
-          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W6: 0</div></div>
-          <div class="bar-col"><div class="bar load-3"></div><div class="tooltip">W7: 3 (GT1)</div></div>
-          <div class="bar-col"><div class="bar load-3"></div><div class="tooltip">W8: 3 (GT1)</div></div>
-          <div class="bar-col"><div class="bar load-3"></div><div class="tooltip">W9: 3 (GT1)</div></div>
-          <div class="bar-col"><div class="bar load-3"></div><div class="tooltip">W10: 3 (GT1)</div></div>
-          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W11: 0</div></div>
-          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W12: 0</div></div>
-          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W13: 0</div></div>
-          <div class="bar-col"><div class="bar load-1"></div><div class="tooltip">W14: 1 (GE1)</div></div>
-          <div class="bar-col"><div class="bar load-1"></div><div class="tooltip">W15: 1 (GE1)</div></div>
-          <div class="bar-col"><div class="bar load-4"></div><div class="tooltip">W16: 4 (GT3+GE1)</div></div>
-          <div class="bar-col"><div class="bar load-4"></div><div class="tooltip">W17: 4 (GT3+GE1)</div></div>
-          <div class="bar-col"><div class="bar load-4"></div><div class="tooltip">W18: 4 (GT3+GE1)</div></div>
-          <div class="bar-col"><div class="bar load-4"></div><div class="tooltip">W19: 4 (GT3+GE1)</div></div>
-          <div class="bar-col"><div class="bar load-1"></div><div class="tooltip">W20: 1 (GE1)</div></div>
-        </div>
-      </div>
-
-      <div class="row-jamie-only">
-        <div class="chart-title">Jamie <span class="badge badge-jamie">Weekly Sessions</span></div>
-        <div class="chart-grid">
-          <!-- Sample 52-week bars for Jamie -->
-          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W1: 0</div></div>
-          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W2: 0</div></div>
-          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W3: 0</div></div>
-          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W4: 0</div></div>
-          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W5: 0</div></div>
-          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W6: 0</div></div>
-          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W7: 0</div></div>
-          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W8: 0</div></div>
-          <div class="bar-col"><div class="bar load-3"></div><div class="tooltip">W9: 3 (GT2)</div></div>
-          <div class="bar-col"><div class="bar load-3"></div><div class="tooltip">W10: 3 (GT2)</div></div>
-          <div class="bar-col"><div class="bar load-3"></div><div class="tooltip">W11: 3 (GT2)</div></div>
-          <div class="bar-col"><div class="bar load-3"></div><div class="tooltip">W12: 3 (GT2)</div></div>
-          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W13: 0</div></div>
-          <div class="bar-col"><div class="bar load-1"></div><div class="tooltip">W14: 1 (GE1)</div></div>
-          <div class="bar-col"><div class="bar load-1"></div><div class="tooltip">W15: 1 (GE1)</div></div>
-          <div class="bar-col"><div class="bar load-1"></div><div class="tooltip">W16: 1 (GE1)</div></div>
-          <div class="bar-col"><div class="bar load-1"></div><div class="tooltip">W17: 1 (GE1)</div></div>
-          <div class="bar-col"><div class="bar load-1"></div><div class="tooltip">W18: 1 (GE1)</div></div>
-          <div class="bar-col"><div class="bar load-1"></div><div class="tooltip">W19: 1 (GE1)</div></div>
-          <div class="bar-col"><div class="bar load-4"></div><div class="tooltip">W20: 4 (GT4+GE1)</div></div>
-        </div>
-      </div>
+      <div class="chart-title" style="margin-top: 16px;">Jamie <span class="badge badge-jamie">Weekly Sessions</span></div>
+      <div class="chart-grid" id="jamie-chart"></div>
     </div>
 
-    <!-- VISUAL 3: 12-MONTH CALENDAR OVERVIEW -->
-    <div class="section-card">
-      <div class="section-title">3. 12-Month Calendar Overview</div>
-      <div class="calendar-grid">
-        <div class="month-card">
-          <div class="month-header">January</div>
-          <div class="month-events"><span style="font-size:10px; color:#9aa0a6;">No Active Cohorts</span></div>
-        </div>
-        <div class="month-card">
-          <div class="month-header">February</div>
-          <div class="month-events">
-            <div class="cal-event cal-event-gt row-dave-only"><span>GT1</span><span class="cal-meta">Dave (3s/wk)</span></div>
-          </div>
-        </div>
-        <div class="month-card">
-          <div class="month-header">March</div>
-          <div class="month-events">
-            <div class="cal-event cal-event-gt row-dave-only"><span>GT1</span><span class="cal-meta">Dave (3s/wk)</span></div>
-            <div class="cal-event cal-event-gt row-jamie-only"><span>GT2</span><span class="cal-meta">Jamie (3s/wk)</span></div>
-          </div>
-        </div>
-        <div class="month-card">
-          <div class="month-header">April</div>
-          <div class="month-events">
-            <div class="cal-event cal-event-ge"><span>GE1</span><span class="cal-meta">Dave & Jamie (1s/wk)</span></div>
-            <div class="cal-event cal-event-gt row-dave-only"><span>GT3</span><span class="cal-meta">Dave (3s/wk)</span></div>
-          </div>
-        </div>
-        <div class="month-card">
-          <div class="month-header">May</div>
-          <div class="month-events">
-            <div class="cal-event cal-event-ge"><span>GE1</span><span class="cal-meta">Dave & Jamie (1s/wk)</span></div>
-            <div class="cal-event cal-event-gt row-dave-only"><span>GT3</span><span class="cal-meta">Dave (3s/wk)</span></div>
-            <div class="cal-event cal-event-gt row-jamie-only"><span>GT4</span><span class="cal-meta">Jamie (3s/wk)</span></div>
-          </div>
-        </div>
-        <div class="month-card">
-          <div class="month-header">June</div>
-          <div class="month-events">
-            <div class="cal-event cal-event-ge"><span>GE1</span><span class="cal-meta">Dave & Jamie (1s/wk)</span></div>
-            <div class="cal-event cal-event-gt row-jamie-only"><span>GT4</span><span class="cal-meta">Jamie (3s/wk)</span></div>
-            <div class="cal-event cal-event-ge"><span>GE2</span><span class="cal-meta">Dave & Jamie (1s/wk)</span></div>
-          </div>
+    <!-- VISUAL 3: MONTHLY CALENDAR WITH QUARTER / MONTH DRILL-DOWN -->
+    <div class="calendar-card">
+      <div class="calendar-toolbar">
+        <div class="section-title" style="margin-bottom:0;">3. 12-Month Calendar Overview (Click a month to zoom in)</div>
+        <div>
+          <button class="btn btn-sub active" onclick="setQuarter('ALL', this)">Full Year</button>
+          <button class="btn btn-sub" onclick="setQuarter('Q1', this)">Q1 (Jan-Mar)</button>
+          <button class="btn btn-sub" onclick="setQuarter('Q2', this)">Q2 (Apr-Jun)</button>
+          <button class="btn btn-sub" onclick="setQuarter('Q3', this)">Q3 (Jul-Sep)</button>
+          <button class="btn btn-sub" onclick="setQuarter('Q4', this)">Q4 (Oct-Dec)</button>
         </div>
       </div>
+      <div class="calendar-grid" id="calendar-grid"></div>
     </div>
 
   </div>
 
-</body>
-</html>
+  <!-- MONTH DRILL-DOWN MODAL -->
+  <div class="modal-overlay" id="month-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-title">Month Detail</h3>
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <script>
+    let activeFilter = 'All';
+    let activeQuarter = 'ALL';
+
+    let cohorts = [
+      { id: 'GT1', programme: 'GT', start: '2027-02-15', end: '2027-03-12', lead: 'Dave', leadSessions: 3, support: 'Jamie', supportSessions: 0 },
+      { id: 'GT2', programme: 'GT', start: '2027-03-01', end: '2027-03-26', lead: 'Jamie', leadSessions: 3, support: 'Dave', supportSessions: 0 },
+      { id: 'GT3', programme: 'GT', start: '2027-04-19', end: '2027-05-14', lead: 'Dave', leadSessions: 3, support: 'Jamie', supportSessions: 0 },
+      { id: 'GT4', programme: 'GT', start: '2027-05-24', end: '2027-06-18', lead: 'Jamie', leadSessions: 3, support: 'Dave', supportSessions: 0 },
+      { id: 'GT5', programme: 'GT', start: '2027-07-19', end: '2027-08-13', lead: 'Dave', leadSessions: 3, support: 'Jamie', supportSessions: 0 },
+      { id: 'GT6', programme: 'GT', start: '2027-08-23', end: '2027-09-17', lead: 'Jamie', leadSessions: 3, support: 'Dave', supportSessions: 0 },
+      { id: 'GE1', programme: 'GE', start: '2027-04-05', end: '2027-06-11', lead: 'Dave and Jamie', leadSessions: 1, support: 'None', supportSessions: 0 },
+      { id: 'GE2', programme: 'GE', start: '2027-06-28', end: '2027-09-03', lead: 'Dave and Jamie', leadSessions: 1, support: 'None', supportSessions: 0 },
+      { id: 'GE3', programme: 'GE', start: '2027-09-20', end: '2027-11-26', lead: 'Dave and Jamie', leadSessions: 1, support: 'None', supportSessions: 0 }
+    ];
+
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const yearStart = new Date("2027-01-01T00:00:00").getTime();
+    const yearEnd = new Date("2027-12-31T23:59:59").getTime();
+    const totalYearMs = yearEnd - yearStart;
+
+    function initHeader() {
+      const header = document.getElementById('weeks-header');
+      for (let i = 1; i <= 52; i++) {
+        const div = document.createElement('div');
+        div.innerText = `W${i}`;
+        header.appendChild(div);
+      }
+    }
+
+    function renderSidebar() {
+      const container = document.getElementById('sidebar-controls');
+      container.innerHTML = '';
+
+      cohorts.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'cohort-card';
+        card.innerHTML = `
+          <h4>${item.id} (${item.programme})</h4>
+          <div class="form-group">
+            <div class="form-row">
+              <div><label>Start</label><input type="date" value="${item.start}" onchange="updateCohort(${index}, 'start', this.value)"></div>
+              <div><label>End</label><input type="date" value="${item.end}" onchange="updateCohort(${index}, 'end', this.value)"></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="form-row">
+              <div>
+                <label>Lead</label>
+                <select onchange="updateCohort(${index}, 'lead', this.value)">
+                  <option value="Dave" ${item.lead === 'Dave' ? 'selected' : ''}>Dave</option>
+                  <option value="Jamie" ${item.lead === 'Jamie' ? 'selected' : ''}>Jamie</option>
+                  <option value="Dave and Jamie" ${item.lead === 'Dave and Jamie' ? 'selected' : ''}>Dave & Jamie</option>
+                </select>
+              </div>
+              <div><label>Lead Sess/Wk</label><input type="number" min="0" max="5" value="${item.leadSessions}" onchange="updateCohort(${index}, 'leadSessions', parseInt(this.value))"></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="form-row">
+              <div>
+                <label>Support</label>
+                <select onchange="updateCohort(${index}, 'support', this.value)">
+                  <option value="None" ${item.support === 'None' ? 'selected' : ''}>None</option>
+                  <option value="Dave" ${item.support === 'Dave' ? 'selected' : ''}>Dave</option>
+                  <option value="Jamie" ${item.support === 'Jamie' ? 'selected' : ''}>Jamie</option>
+                </select>
+              </div>
+              <div><label>Supp Sess/Wk</label><input type="number" min="0" max="5" value="${item.supportSessions}" onchange="updateCohort(${index}, 'supportSessions', parseInt(this.value))"></div>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function updateCohort(index, key, value) {
+      cohorts[index][key] = value;
+      renderAll();
+    }
+
+    function setFilter(filter, btn) {
+      activeFilter = filter;
+      document.querySelectorAll('.controls-card .btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderAll();
+    }
+
+    function setQuarter(q, btn) {
+      activeQuarter = q;
+      document.querySelectorAll('.calendar-toolbar .btn-sub').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderCalendar();
+    }
+
+    function getWeekNumber(dateStr) {
+      const d = new Date(dateStr);
+      const start = new Date(d.getFullYear(), 0, 1);
+      return Math.ceil((((d - start) / 86400000) + start.getDay() + 1) / 7);
+    }
+
+    /* 1. GANTT CHART */
+    function renderGantt() {
+      const container = document.getElementById('gantt-rows');
+      container.innerHTML = '';
+
+      cohorts.forEach(item => {
+        if (activeFilter !== 'All') {
+          const isLead = item.lead.includes(activeFilter);
+          const isSupport = item.support === activeFilter;
+          if (!isLead && !isSupport) return;
+        }
+
+        const row = document.createElement('div');
+        row.className = 'programme-row';
+
+        const label = document.createElement('div');
+        label.className = 'row-label';
+        label.innerText = item.id;
+
+        const track = document.createElement('div');
+        track.className = 'track-container';
+
+        const grid = document.createElement('div');
+        grid.className = 'week-grid-lines';
+        for (let i = 0; i < 52; i++) grid.appendChild(document.createElement('div'));
+        track.appendChild(grid);
+
+        const sTime = new Date(item.start + "T00:00:00").getTime();
+        const eTime = new Date(item.end + "T23:59:59").getTime();
+
+        const leftPercent = ((sTime - yearStart) / totalYearMs) * 100;
+        const widthPercent = ((eTime - sTime) / totalYearMs) * 100;
+
+        const block = document.createElement('div');
+        block.className = `block bg-${item.programme}`;
+        block.style.left = `${Math.max(0, leftPercent)}%`;
+        block.style.width = `${Math.min(100 - leftPercent, widthPercent)}%`;
+        block.innerText = item.id;
+
+        track.appendChild(block);
+        row.appendChild(label);
+        row.appendChild(track);
+        container.appendChild(row);
+      });
+    }
+
+    /* 2. WORKLOAD CHARTS */
+    function calculateWorkload(person) {
+      const weeklyTotals = new Array(53).fill(0);
+
+      cohorts.forEach(item => {
+        const startW = getWeekNumber(item.start);
+        const endW = getWeekNumber(item.end);
+
+        let sessions = 0;
+        if (item.lead.includes(person)) sessions += item.leadSessions;
+        if (item.support === person) sessions += item.supportSessions;
+
+        if (sessions > 0) {
+          for (let w = startW; w <= endW && w <= 52; w++) {
+            weeklyTotals[w] += sessions;
+          }
+        }
+      });
+
+      return weeklyTotals;
+    }
+
+    function renderCharts() {
+      const daveData = calculateWorkload('Dave');
+      const jamieData = calculateWorkload('Jamie');
+
+      const daveContainer = document.getElementById('dave-chart');
+      const jamieContainer = document.getElementById('jamie-chart');
+
+      daveContainer.innerHTML = '';
+      jamieContainer.innerHTML = '';
+
+      for (let w = 1; w <= 52; w++) {
+        const dCol = document.createElement('div');
+        dCol.className = 'bar-col';
+        const dCount = daveData[w];
+        const dClass = dCount >= 5 ? 'load-5' : `load-${dCount}`;
+        dCol.innerHTML = `<div class="bar ${dClass}"></div><div class="tooltip">W${w}:${dCount} Sessions</div>`;
+        daveContainer.appendChild(dCol);
+
+        const jCol = document.createElement('div');
+        jCol.className = 'bar-col';
+        const jCount = jamieData[w];
+        const jClass = jCount >= 5 ? 'load-5' : `load-${jCount}`;
+        jCol.innerHTML = `<div class="bar ${jClass}"></div><div class="tooltip">W${w}:${jCount} Sessions</div>`;
+        jamieContainer.appendChild(jCol);
+      }
+    }
+
+    /* 3. CALENDAR GRID WITH QUARTER FILTER */
+    function renderCalendar() {
+      const grid = document.getElementById('calendar-grid');
+      grid.innerHTML = '';
+
+      months.forEach((monthName, monthIndex) => {
+        // Quarter Filter Logic
+        if (activeQuarter === 'Q1' && monthIndex > 2) return;
+        if (activeQuarter === 'Q2' && (monthIndex < 3 || monthIndex > 5)) return;
+        if (activeQuarter === 'Q3' && (monthIndex < 6 || monthIndex > 8)) return;
+        if (activeQuarter === 'Q4' && monthIndex < 9) return;
+
+        const monthCard = document.createElement('div');
+        monthCard.className = 'month-card';
+        monthCard.onclick = () => openMonthModal(monthIndex);
+
+        const header = document.createElement('div');
+        header.className = 'month-header';
+        header.innerHTML = `<span>${monthName}</span><span style="font-size:9px; color:#5f6368;">🔍 Zoom</span>`;
+        monthCard.appendChild(header);
+
+        const eventsContainer = document.createElement('div');
+        eventsContainer.className = 'month-events';
+
+        cohorts.forEach(item => {
+          if (activeFilter !== 'All') {
+            const isLead = item.lead.includes(activeFilter);
+            const isSupport = item.support === activeFilter;
+            if (!isLead && !isSupport) return;
+          }
+
+          const sDate = new Date(item.start);
+          const eDate = new Date(item.end);
+
+          if (monthIndex >= sDate.getMonth() && monthIndex <= eDate.getMonth()) {
+            const ev = document.createElement('div');
+            ev.className = `cal-event cal-event-${item.programme.toLowerCase()}`;
+            
+            let sessInfo = `${item.leadSessions}s/wk`;
+            if (activeFilter !== 'All' && item.support === activeFilter) {
+              sessInfo = `${item.supportSessions}s/wk (Supp)`;
+            }
+
+            ev.innerHTML = `
+              <span>${item.id}</span>
+              <span class="cal-event-meta">${item.lead} (${sessInfo})</span>
+            `;
+            eventsContainer.appendChild(ev);
+          }
+        });
+
+        if (eventsContainer.children.length === 0) {
+          eventsContainer.innerHTML = `<div style="font-size:10px; color:#9aa0a6; text-align:center; padding-top:10px;">No Active Programmes</div>`;
+        }
+
+        monthCard.appendChild(eventsContainer);
+        grid.appendChild(monthCard);
+      });
+    }
+
+    /* MONTH DRILL-DOWN MODAL */
+    function openMonthModal(mIdx) {
+      const modal = document.getElementById('month-modal');
+      const title = document.getElementById('modal-title');
+      const body = document.getElementById('modal-body');
+
+      title.innerText = `${months[mIdx]} 2027 Detailed View`;
+      body.innerHTML = '';
+
+      const activeCohorts = cohorts.filter(item => {
+        const sM = new Date(item.start).getMonth();
+        const eM = new Date(item.end).getMonth();
+        return mIdx >= sM && mIdx <= eM;
+      });
+
+      if (activeCohorts.length === 0) {
+        body.innerHTML = `<p style="color:#5f6368; font-size:13px;">No programme cohorts active during this month.</p>`;
+      } else {
+        activeCohorts.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'detail-item';
+          div.innerHTML = `
+            <div style="font-weight:bold; font-size:13px; color:#1a73e8; margin-bottom:4px;">${item.
