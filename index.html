@@ -62,23 +62,22 @@
     .load-4 { height: 80%; background-color: #ea4335; }
     .load-5 { height: 100%; background-color: #b31412; }
 
-    /* Visual 3: Vertical 52-Week Programme Flow Matrix */
+    /* Visual 3: Continuous 52-Week Matrix */
     .matrix-card { background: #ffffff; border: 1px solid #dadce0; border-radius: 8px; padding: 16px; margin-bottom: 24px; }
     .matrix-table { width: 100%; border-collapse: collapse; font-size: 11px; }
     .matrix-table th { background: #f1f3f4; color: #3c4043; padding: 8px; border: 1px solid #dadce0; font-weight: bold; text-align: center; position: sticky; top: 0; z-index: 5; }
-    .matrix-table td { padding: 6px 8px; border: 1px solid #e8eaed; vertical-align: top; text-align: center; }
+    .matrix-table td { padding: 6px 8px; border: 1px solid #e8eaed; vertical-align: middle; text-align: center; }
     .matrix-table tr:hover { background-color: #f8f9fa; }
     
-    .week-col-label { font-weight: bold; color: #1a73e8; background: #fafafa; width: 130px; text-align: left !important; }
+    .week-col-label { font-weight: bold; color: #1a73e8; background: #fafafa; width: 140px; text-align: left !important; }
     .matrix-cell-empty { color: #bdc1c6; font-style: italic; font-size: 10px; }
     
-    .matrix-block { padding: 4px 8px; border-radius: 4px; color: #ffffff; font-weight: bold; font-size: 10px; margin-bottom: 2px; display: block; width: 100%; text-align: left; }
+    .cell-stack { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+    .matrix-block { padding: 4px 8px; border-radius: 4px; color: #ffffff; font-weight: bold; font-size: 10px; display: flex; justify-content: space-between; align-items: center; width: 100%; }
     .matrix-block-gt { background-color: #1a73e8; }
     .matrix-block-ge { background-color: #1e8e3e; }
     .matrix-block-gg { background-color: #d93025; }
-    .matrix-meta { font-size: 9px; font-weight: normal; opacity: 0.95; float: right; }
-    
-    .month-divider td { background: #e8f0fe !important; color: #174ea6; font-weight: bold; text-align: left !important; font-size: 12px; padding: 6px 10px; border-top: 2px solid #aecbfa; }
+    .matrix-meta { font-size: 9px; font-weight: normal; opacity: 0.95; }
   </style>
 </head>
 <body>
@@ -119,14 +118,14 @@
       <div class="chart-grid" id="jamie-chart"></div>
     </div>
 
-    <!-- VISUAL 3: VERTICAL 52-WEEK PROGRAMME FLOW MATRIX -->
+    <!-- VISUAL 3: CONTINUOUS 52-WEEK MATRIX -->
     <div class="matrix-card">
       <div class="section-title">3. 52-Week Vertical Programme Flow & Overlap Matrix</div>
-      <div style="max-height: 600px; overflow-y: auto; border: 1px solid #dadce0; border-radius: 6px;">
+      <div style="max-height: 650px; overflow-y: auto; border: 1px solid #dadce0; border-radius: 6px;">
         <table class="matrix-table">
           <thead>
             <tr>
-              <th style="width: 130px; text-align: left;">Week</th>
+              <th style="width: 140px; text-align: left;">Week</th>
               <th>GT Cohorts (4 Wks)</th>
               <th>GE Extended Pathway (10 Wks)</th>
               <th>GG Cohorts</th>
@@ -198,219 +197,4 @@
                 <select onchange="updateCohort(${index}, 'lead', this.value)">
                   <option value="Dave" ${item.lead === 'Dave' ? 'selected' : ''}>Dave</option>
                   <option value="Jamie" ${item.lead === 'Jamie' ? 'selected' : ''}>Jamie</option>
-                  <option value="Dave and Jamie" ${item.lead === 'Dave and Jamie' ? 'selected' : ''}>Dave & Jamie</option>
-                </select>
-              </div>
-              <div><label>Lead Sess/Wk</label><input type="number" min="0" max="5" value="${item.leadSessions}" onchange="updateCohort(${index}, 'leadSessions', parseInt(this.value))"></div>
-            </div>
-          </div>
-          <div class="form-group">
-            <div class="form-row">
-              <div>
-                <label>Support</label>
-                <select onchange="updateCohort(${index}, 'support', this.value)">
-                  <option value="None" ${item.support === 'None' ? 'selected' : ''}>None</option>
-                  <option value="Dave" ${item.support === 'Dave' ? 'selected' : ''}>Dave</option>
-                  <option value="Jamie" ${item.support === 'Jamie' ? 'selected' : ''}>Jamie</option>
-                </select>
-              </div>
-              <div><label>Supp Sess/Wk</label><input type="number" min="0" max="5" value="${item.supportSessions}" onchange="updateCohort(${index}, 'supportSessions', parseInt(this.value))"></div>
-            </div>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    function updateCohort(index, key, value) {
-      cohorts[index][key] = value;
-      renderAll();
-    }
-
-    function isPersonInvolved(item, person) {
-      if (person === 'All') return true;
-      const isLead = item.lead.includes(person);
-      const isSupport = item.support === person && item.supportSessions > 0;
-      return isLead || isSupport;
-    }
-
-    function setFilter(filter, btn) {
-      activeFilter = filter;
-      document.querySelectorAll('.controls-card .btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      renderAll();
-    }
-
-    function getWeekNumber(dateStr) {
-      const d = parseDate(dateStr);
-      const start = new Date(d.getFullYear(), 0, 1);
-      return Math.ceil((((d - start) / 86400000) + start.getDay() + 1) / 7);
-    }
-
-    /* 1. GANTT RENDER */
-    function renderGantt() {
-      const container = document.getElementById('gantt-rows');
-      container.innerHTML = '';
-
-      cohorts.forEach(item => {
-        if (!isPersonInvolved(item, activeFilter)) return;
-
-        const row = document.createElement('div');
-        row.className = 'programme-row';
-
-        const label = document.createElement('div');
-        label.className = 'row-label';
-        label.innerText = item.id;
-
-        const track = document.createElement('div');
-        track.className = 'track-container';
-
-        const grid = document.createElement('div');
-        grid.className = 'week-grid-lines';
-        for (let i = 0; i < 52; i++) grid.appendChild(document.createElement('div'));
-        track.appendChild(grid);
-
-        const sTime = parseDate(item.start).getTime();
-        const eTime = parseDate(item.end).getTime();
-
-        const leftPercent = ((sTime - yearStart) / totalYearMs) * 100;
-        const widthPercent = ((eTime - sTime) / totalYearMs) * 100;
-
-        const block = document.createElement('div');
-        block.className = `block bg-${item.programme}`;
-        block.style.left = `${Math.max(0, leftPercent)}%`;
-        block.style.width = `${Math.min(100 - leftPercent, widthPercent)}%`;
-        block.innerText = item.id;
-
-        track.appendChild(block);
-        row.appendChild(label);
-        row.appendChild(track);
-        container.appendChild(row);
-      });
-    }
-
-    /* 2. WORKLOAD RENDER */
-    function calculateWorkload(person) {
-      const weeklyTotals = new Array(53).fill(0);
-
-      cohorts.forEach(item => {
-        const startW = getWeekNumber(item.start);
-        const endW = getWeekNumber(item.end);
-
-        let sessions = 0;
-        if (item.lead.includes(person)) sessions += item.leadSessions;
-        if (item.support === person) sessions += item.supportSessions;
-
-        if (sessions > 0) {
-          for (let w = startW; w <= endW && w <= 52; w++) {
-            weeklyTotals[w] += sessions;
-          }
-        }
-      });
-
-      return weeklyTotals;
-    }
-
-    function renderCharts() {
-      const daveData = calculateWorkload('Dave');
-      const jamieData = calculateWorkload('Jamie');
-
-      const daveContainer = document.getElementById('dave-chart');
-      const jamieContainer = document.getElementById('jamie-chart');
-
-      daveContainer.innerHTML = '';
-      jamieContainer.innerHTML = '';
-
-      for (let w = 1; w <= 52; w++) {
-        const dCol = document.createElement('div');
-        dCol.className = 'bar-col';
-        const dCount = daveData[w];
-        const dClass = dCount >= 5 ? 'load-5' : `load-${dCount}`;
-        dCol.innerHTML = `<div class="bar ${dClass}"></div><div class="tooltip">W${w}: ${dCount} Sessions</div>`;
-        daveContainer.appendChild(dCol);
-
-        const jCol = document.createElement('div');
-        jCol.className = 'bar-col';
-        const jCount = jamieData[w];
-        const jClass = jCount >= 5 ? 'load-5' : `load-${jCount}`;
-        jCol.innerHTML = `<div class="bar ${jClass}"></div><div class="tooltip">W${w}: ${jCount} Sessions</div>`;
-        jamieContainer.appendChild(jCol);
-      }
-    }
-
-    /* 3. VERTICAL 52-WEEK MATRIX RENDER */
-    function renderMatrix() {
-      const tbody = document.getElementById('matrix-body');
-      tbody.innerHTML = '';
-
-      let currentMonthName = "";
-
-      for (let w = 1; w <= 52; w++) {
-        const weekDate = new Date(2027, 0, (w - 1) * 7 + 1);
-        const monthName = months[weekDate.getMonth()];
-
-        if (monthName !== currentMonthName) {
-          currentMonthName = monthName;
-          const monthRow = document.createElement('tr');
-          monthRow.className = 'month-divider';
-          monthRow.innerHTML = `<td colspan="4">📅 ${currentMonthName} 2027</td>`;
-          tbody.appendChild(monthRow);
-        }
-
-        const tr = document.createElement('tr');
-
-        const tdWeek = document.createElement('td');
-        tdWeek.className = 'week-col-label';
-        tdWeek.innerHTML = `Week ${w} <span style="font-size:9px; color:#5f6368; font-weight:normal;">(${weekDate.getDate()} ${monthName.substring(0,3)})</span>`;
-        tr.appendChild(tdWeek);
-
-        ['GT', 'GE', 'GG'].forEach(prog => {
-          const td = document.createElement('td');
-          
-          const matching = cohorts.filter(item => {
-            if (item.programme !== prog) return false;
-            if (!isPersonInvolved(item, activeFilter)) return false;
-
-            const sW = getWeekNumber(item.start);
-            const eW = getWeekNumber(item.end);
-            return w >= sW && w <= eW;
-          });
-
-          if (matching.length === 0) {
-            td.innerHTML = `<span class="matrix-cell-empty">—</span>`;
-          } else {
-            matching.forEach(item => {
-              let sess = `${item.leadSessions}s/wk`;
-              if (activeFilter !== 'All' && item.support === activeFilter) {
-                sess = `${item.supportSessions}s/wk (Supp)`;
-              }
-
-              const block = document.createElement('div');
-              block.className = `matrix-block matrix-block-${prog.toLowerCase()}`;
-              block.innerHTML = `
-                <span>${item.id}</span>
-                <span class="matrix-meta">${item.lead} (${sess})</span>
-              `;
-              td.appendChild(block);
-            });
-          }
-
-          tr.appendChild(td);
-        });
-
-        tbody.appendChild(tr);
-      }
-    }
-
-    function renderAll() {
-      renderGantt();
-      renderCharts();
-      renderMatrix();
-    }
-
-    initHeader();
-    renderSidebar();
-    renderAll();
-  </script>
-</body>
-</html>
+                  <option value="Dave and Jamie
