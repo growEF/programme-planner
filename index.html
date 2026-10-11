@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>2027 Interactive Programme Planner</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; margin: 24px; background-color: #f8f9fa; color: #202124; line-height: 1.4; }
+
+    h2 { font-size: 18px; color: #1a73e8; margin-bottom: 4px; }
+    p.subtitle { color: #5f6368; font-size: 13px; margin-top: 0; margin-bottom: 20px; }
+
+    /* Radio Button Filtering Logic (CSS Only) */
+    input[type="radio"] { display: none; }
+
+    .controls-card {
+      background: #ffffff; border: 1px solid #dadce0; border-radius: 8px;
+      padding: 12px 16px; margin-bottom: 24px; display: flex; gap: 10px; align-items: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .btn-label {
+      padding: 6px 14px; border: 1px solid #dadce0; border-radius: 16px;
+      background: #ffffff; cursor: pointer; font-size: 12px; font-weight: bold; color: #3c4043;
+      user-select: none;
+    }
+
+    #view-all:checked ~ .controls-card label[for="view-all"],
+    #view-dave:checked ~ .controls-card label[for="view-dave"],
+    #view-jamie:checked ~ .controls-card label[for="view-jamie"] {
+      background-color: #1a73e8; color: #ffffff; border-color: #1a73e8;
+    }
+
+    /* Filter Rows Dynamically via Pure CSS */
+    #view-dave:checked ~ .main-content .row-jamie-only { display: none !important; }
+    #view-jamie:checked ~ .main-content .row-dave-only { display: none !important; }
+
+    /* Layout Containers */
+    .section-card {
+      background: #ffffff; border: 1px solid #dadce0; border-radius: 8px;
+      padding: 16px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .section-title { font-size: 14px; font-weight: bold; color: #3c4043; margin-top: 0; margin-bottom: 12px; }
+
+    /* 1. GANTT TIMELINE */
+    .gantt-overflow { overflow-x: auto; }
+    .weeks-header {
+      display: grid; grid-template-columns: 80px repeat(52, 1fr);
+      border-bottom: 2px solid #e8eaed; padding-bottom: 6px; font-size: 10px; font-weight: bold; text-align: center; color: #5f6368;
+    }
+    .programme-row {
+      display: grid; grid-template-columns: 80px 1fr; align-items: center;
+      padding: 6px 0; border-bottom: 1px solid #f1f3f4;
+    }
+    .row-label { font-weight: bold; font-size: 12px; color: #3c4043; }
+
+    .track-container { position: relative; height: 26px; background-color: #f1f3f4; border-radius: 4px; }
+    .week-grid-lines {
+      position: absolute; top:0; left:0; right:0; bottom:0;
+      display: grid; grid-template-columns: repeat(52, 1fr); pointer-events: none;
+    }
+    .week-grid-lines div { border-right: 1px dashed #e8eaed; }
+
+    .block {
+      position: absolute; height: 18px; top: 4px; color: #ffffff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: bold; border-radius: 3px; z-index: 2;
+    }
+    .bg-GT { background-color: #1a73e8; }
+    .bg-GE { background-color: #1e8e3e; }
+
+    /* Tooltip styling */
+    .tooltip {
+      display: none; position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%);
+      background-color: #202124; color: #ffffff; padding: 4px 8px; border-radius: 4px;
+      font-size: 10px; white-space: nowrap; z-index: 10; font-weight: normal;
+    }
+    .block:hover .tooltip { display: block; }
+
+    /* 2. WORKLOAD BAR CHARTS */
+    .chart-title { font-size: 13px; font-weight: bold; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .badge { padding: 2px 8px; border-radius: 10px; font-size: 10px; color: white; font-weight: bold; }
+    .badge-dave { background-color: #1a73e8; }
+    .badge-jamie { background-color: #1e8e3e; }
+
+    .chart-grid {
+      display: grid; grid-template-columns: repeat(52, 1fr); gap: 2px;
+      align-items: flex-end; height: 75px; border-bottom: 2px solid #dadce0; padding-bottom: 4px;
+    }
+    .bar-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; position: relative; }
+    .bar { width: 100%; border-radius: 2px 2px 0 0; }
+    .bar-col:hover .tooltip { display: block; }
+
+    .load-0 { height: 2px; background-color: #e8eaed; }
+    .load-1 { height: 25%; background-color: #8ab4f8; }
+    .load-2 { height: 50%; background-color: #4285f4; }
+    .load-3 { height: 75%; background-color: #fbbc04; }
+    .load-4 { height: 100%; background-color: #ea4335; }
+
+    /* 3. 12-MONTH CALENDAR OVERVIEW */
+    .calendar-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .month-card { border: 1px solid #dadce0; border-radius: 6px; background: #fafafa; padding: 10px; min-height: 110px; }
+    .month-header { font-size: 12px; font-weight: bold; color: #1a73e8; border-bottom: 1px solid #e8eaed; padding-bottom: 4px; margin-bottom: 8px; text-align: center; }
+    .month-events { display: flex; flex-direction: column; gap: 4px; }
+    .cal-event {
+      font-size: 10px; padding: 4px 6px; border-radius: 4px; color: #ffffff; font-weight: bold;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .cal-event-gt { background-color: #1a73e8; }
+    .cal-event-ge { background-color: #1e8e3e; }
+    .cal-meta { font-size: 9px; font-weight: normal; opacity: 0.9; }
+  </style>
+</head>
+<body>
+
+  <!-- CSS Control Inputs -->
+  <input type="radio" id="view-all" name="view-master" checked>
+  <input type="radio" id="view-dave" name="view-master">
+  <input type="radio" id="view-jamie" name="view-master">
+
+  <h2>2027 Programme Year Plan Overview</h2>
+  <p class="subtitle">Pure HTML & CSS Visualizer. Use the buttons below to switch viewpoints without any script dependency.</p>
+
+  <!-- MASTER TOGGLES -->
+  <div class="controls-card">
+    <span style="font-size: 12px; font-weight: bold; color: #3c4043;">Viewpoint Filter:</span>
+    <label for="view-all" class="btn-label">All Programmes</label>
+    <label for="view-dave" class="btn-label">Dave's Viewpoint</label>
+    <label for="view-jamie" class="btn-label">Jamie's Viewpoint</label>
+  </div>
+
+  <div class="main-content">
+
+    <!-- VISUAL 1: GANTT CHART -->
+    <div class="section-card gantt-overflow">
+      <div class="section-title">1. Gantt Timeline Overview (52 Weeks)</div>
+      
+      <div class="weeks-header">
+        <div style="text-align: left;">Cohort</div>
+        <div>W1</div><div>W2</div><div>W3</div><div>W4</div><div>W5</div><div>W6</div><div>W7</div><div>W8</div><div>W9</div><div>W10</div>
+        <div>W11</div><div>W12</div><div>W13</div><div>W14</div><div>W15</div><div>W16</div><div>W17</div><div>W18</div><div>W19</div><div>W20</div>
+        <div>W21</div><div>W22</div><div>W23</div><div>W24</div><div>W25</div><div>W26</div><div>W27</div><div>W28</div><div>W29</div><div>W30</div>
+        <div>W31</div><div>W32</div><div>W33</div><div>W34</div><div>W35</div><div>W36</div><div>W37</div><div>W38</div><div>W39</div><div>W40</div>
+        <div>W41</div><div>W42</div><div>W43</div><div>W44</div><div>W45</div><div>W46</div><div>W47</div><div>W48</div><div>W49</div><div>W50</div>
+        <div>W51</div><div>W52</div>
+      </div>
+
+      <!-- GT Rows -->
+      <div class="programme-row row-dave-only">
+        <div class="row-label">GT1</div>
+        <div class="track-container">
+          <div class="week-grid-lines"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+          <div class="block bg-GT" style="left: 12.6%; width: 7.4%;">GT1<div class="tooltip">GT1 (Dave) - 3 Sessions/wk</div></div>
+        </div>
+      </div>
+
+      <div class="programme-row row-jamie-only">
+        <div class="row-label">GT2</div>
+        <div class="track-container">
+          <div class="week-grid-lines"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+          <div class="block bg-GT" style="left: 16.4%; width: 7.1%;">GT2<div class="tooltip">GT2 (Jamie) - 3 Sessions/wk</div></div>
+        </div>
+      </div>
+
+      <div class="programme-row row-dave-only">
+        <div class="row-label">GT3</div>
+        <div class="track-container">
+          <div class="week-grid-lines"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+          <div class="block bg-GT" style="left: 29.8%; width: 7.1%;">GT3<div class="tooltip">GT3 (Dave) - 3 Sessions/wk</div></div>
+        </div>
+      </div>
+
+      <div class="programme-row row-jamie-only">
+        <div class="row-label">GT4</div>
+        <div class="track-container">
+          <div class="week-grid-lines"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+          <div class="block bg-GT" style="left: 39.4%; width: 7.1%;">GT4<div class="tooltip">GT4 (Jamie) - 3 Sessions/wk</div></div>
+        </div>
+      </div>
+
+      <div class="programme-row row-dave-only">
+        <div class="row-label">GT5</div>
+        <div class="track-container">
+          <div class="week-grid-lines"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+          <div class="block bg-GT" style="left: 54.8%; width: 7.1%;">GT5<div class="tooltip">GT5 (Dave) - 3 Sessions/wk</div></div>
+        </div>
+      </div>
+
+      <div class="programme-row row-jamie-only">
+        <div class="row-label">GT6</div>
+        <div class="track-container">
+          <div class="week-grid-lines"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+          <div class="block bg-GT" style="left: 64.3%; width: 7.1%;">GT6<div class="tooltip">GT6 (Jamie) - 3 Sessions/wk</div></div>
+        </div>
+      </div>
+
+      <!-- GE Rows -->
+      <div class="programme-row">
+        <div class="row-label">GE1</div>
+        <div class="track-container">
+          <div class="week-grid-lines"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+          <div class="block bg-GE" style="left: 26.0%; width: 18.3%;">GE1<div class="tooltip">GE1 (Dave & Jamie) - 1 Session/wk</div></div>
+        </div>
+      </div>
+
+      <div class="programme-row">
+        <div class="row-label">GE2</div>
+        <div class="track-container">
+          <div class="week-grid-lines"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+          <div class="block bg-GE" style="left: 49.0%; width: 18.3%;">GE2<div class="tooltip">GE2 (Dave & Jamie) - 1 Session/wk</div></div>
+        </div>
+      </div>
+
+      <div class="programme-row">
+        <div class="row-label">GE3</div>
+        <div class="track-container">
+          <div class="week-grid-lines"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+          <div class="block bg-GE" style="left: 72.0%; width: 18.3%;">GE3<div class="tooltip">GE3 (Dave & Jamie) - 1 Session/wk</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VISUAL 2: WORKLOAD CHARTS -->
+    <div class="section-card">
+      <div class="section-title">2. Leader Weekly Session Workload</div>
+      
+      <div class="row-dave-only" style="margin-bottom: 16px;">
+        <div class="chart-title">Dave <span class="badge badge-dave">Weekly Sessions</span></div>
+        <div class="chart-grid">
+          <!-- Sample 52-week bars for Dave -->
+          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W1: 0</div></div>
+          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W2: 0</div></div>
+          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W3: 0</div></div>
+          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W4: 0</div></div>
+          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W5: 0</div></div>
+          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W6: 0</div></div>
+          <div class="bar-col"><div class="bar load-3"></div><div class="tooltip">W7: 3 (GT1)</div></div>
+          <div class="bar-col"><div class="bar load-3"></div><div class="tooltip">W8: 3 (GT1)</div></div>
+          <div class="bar-col"><div class="bar load-3"></div><div class="tooltip">W9: 3 (GT1)</div></div>
+          <div class="bar-col"><div class="bar load-3"></div><div class="tooltip">W10: 3 (GT1)</div></div>
+          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W11: 0</div></div>
+          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W12: 0</div></div>
+          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W13: 0</div></div>
+          <div class="bar-col"><div class="bar load-1"></div><div class="tooltip">W14: 1 (GE1)</div></div>
+          <div class="bar-col"><div class="bar load-1"></div><div class="tooltip">W15: 1 (GE1)</div></div>
+          <div class="bar-col"><div class="bar load-4"></div><div class="tooltip">W16: 4 (GT3+GE1)</div></div>
+          <div class="bar-col"><div class="bar load-4"></div><div class="tooltip">W17: 4 (GT3+GE1)</div></div>
+          <div class="bar-col"><div class="bar load-4"></div><div class="tooltip">W18: 4 (GT3+GE1)</div></div>
+          <div class="bar-col"><div class="bar load-4"></div><div class="tooltip">W19: 4 (GT3+GE1)</div></div>
+          <div class="bar-col"><div class="bar load-1"></div><div class="tooltip">W20: 1 (GE1)</div></div>
+        </div>
+      </div>
+
+      <div class="row-jamie-only">
+        <div class="chart-title">Jamie <span class="badge badge-jamie">Weekly Sessions</span></div>
+        <div class="chart-grid">
+          <!-- Sample 52-week bars for Jamie -->
+          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W1: 0</div></div>
+          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W2: 0</div></div>
+          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W3: 0</div></div>
+          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W4: 0</div></div>
+          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W5: 0</div></div>
+          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W6: 0</div></div>
+          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W7: 0</div></div>
+          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W8: 0</div></div>
+          <div class="bar-col"><div class="bar load-3"></div><div class="tooltip">W9: 3 (GT2)</div></div>
+          <div class="bar-col"><div class="bar load-3"></div><div class="tooltip">W10: 3 (GT2)</div></div>
+          <div class="bar-col"><div class="bar load-3"></div><div class="tooltip">W11: 3 (GT2)</div></div>
+          <div class="bar-col"><div class="bar load-3"></div><div class="tooltip">W12: 3 (GT2)</div></div>
+          <div class="bar-col"><div class="bar load-0"></div><div class="tooltip">W13: 0</div></div>
+          <div class="bar-col"><div class="bar load-1"></div><div class="tooltip">W14: 1 (GE1)</div></div>
+          <div class="bar-col"><div class="bar load-1"></div><div class="tooltip">W15: 1 (GE1)</div></div>
+          <div class="bar-col"><div class="bar load-1"></div><div class="tooltip">W16: 1 (GE1)</div></div>
+          <div class="bar-col"><div class="bar load-1"></div><div class="tooltip">W17: 1 (GE1)</div></div>
+          <div class="bar-col"><div class="bar load-1"></div><div class="tooltip">W18: 1 (GE1)</div></div>
+          <div class="bar-col"><div class="bar load-1"></div><div class="tooltip">W19: 1 (GE1)</div></div>
+          <div class="bar-col"><div class="bar load-4"></div><div class="tooltip">W20: 4 (GT4+GE1)</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VISUAL 3: 12-MONTH CALENDAR OVERVIEW -->
+    <div class="section-card">
+      <div class="section-title">3. 12-Month Calendar Overview</div>
+      <div class="calendar-grid">
+        <div class="month-card">
+          <div class="month-header">January</div>
+          <div class="month-events"><span style="font-size:10px; color:#9aa0a6;">No Active Cohorts</span></div>
+        </div>
+        <div class="month-card">
+          <div class="month-header">February</div>
+          <div class="month-events">
+            <div class="cal-event cal-event-gt row-dave-only"><span>GT1</span><span class="cal-meta">Dave (3s/wk)</span></div>
+          </div>
+        </div>
+        <div class="month-card">
+          <div class="month-header">March</div>
+          <div class="month-events">
+            <div class="cal-event cal-event-gt row-dave-only"><span>GT1</span><span class="cal-meta">Dave (3s/wk)</span></div>
+            <div class="cal-event cal-event-gt row-jamie-only"><span>GT2</span><span class="cal-meta">Jamie (3s/wk)</span></div>
+          </div>
+        </div>
+        <div class="month-card">
+          <div class="month-header">April</div>
+          <div class="month-events">
+            <div class="cal-event cal-event-ge"><span>GE1</span><span class="cal-meta">Dave & Jamie (1s/wk)</span></div>
+            <div class="cal-event cal-event-gt row-dave-only"><span>GT3</span><span class="cal-meta">Dave (3s/wk)</span></div>
+          </div>
+        </div>
+        <div class="month-card">
+          <div class="month-header">May</div>
+          <div class="month-events">
+            <div class="cal-event cal-event-ge"><span>GE1</span><span class="cal-meta">Dave & Jamie (1s/wk)</span></div>
+            <div class="cal-event cal-event-gt row-dave-only"><span>GT3</span><span class="cal-meta">Dave (3s/wk)</span></div>
+            <div class="cal-event cal-event-gt row-jamie-only"><span>GT4</span><span class="cal-meta">Jamie (3s/wk)</span></div>
+          </div>
+        </div>
+        <div class="month-card">
+          <div class="month-header">June</div>
+          <div class="month-events">
+            <div class="cal-event cal-event-ge"><span>GE1</span><span class="cal-meta">Dave & Jamie (1s/wk)</span></div>
+            <div class="cal-event cal-event-gt row-jamie-only"><span>GT4</span><span class="cal-meta">Jamie (3s/wk)</span></div>
+            <div class="cal-event cal-event-ge"><span>GE2</span><span class="cal-meta">Dave & Jamie (1s/wk)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
