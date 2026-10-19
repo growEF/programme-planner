@@ -407,12 +407,21 @@
       { id: 'GG3', programme: 'GG', start: '2027-11-29', end: '2027-12-24', lead: 'Dave and Jamie', leadSessions: 2, support: 'None', supportSessions: 0 }
     ];
 
-    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
     function parseDate(str) {
       if (!str) return new Date(2027, 0, 1);
       const parts = str.split('-');
       return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    }
+
+    // Returns Monday for the given week number in 2027
+    function getMondayOfWeek(w) {
+      // Jan 1, 2027 was a Friday. First Monday of 2027 was Jan 4th.
+      const firstMonday = new Date(2027, 0, 4);
+      const monday = new Date(firstMonday);
+      monday.setDate(firstMonday.getDate() + (w - 1) * 7);
+      return monday;
     }
 
     function getWeekNumber(dateStr) {
@@ -591,18 +600,21 @@
       jamieContainer.innerHTML = '';
 
       for (let w = 1; w <= 52; w++) {
+        const monday = getMondayOfWeek(w);
+        const dateLabel = `${monday.getDate().toString().padStart(2, '0')} ${months[monday.getMonth()]}`;
+
         const dVal = daveData[w];
         const dClass = dVal >= 5 ? 'load-5' : `load-${dVal}`;
         const dCol = document.createElement('div');
         dCol.className = 'bar-col';
-        dCol.innerHTML = `<div class="bar ${dClass}"></div><div class="tooltip">W${w}: ${dVal} Sessions</div>`;
+        dCol.innerHTML = `<div class="bar ${dClass}"></div><div class="tooltip">W${w} (${dateLabel}): ${dVal} Sessions</div>`;
         daveContainer.appendChild(dCol);
 
         const jVal = jamieData[w];
         const jClass = jVal >= 5 ? 'load-5' : `load-${jVal}`;
         const jCol = document.createElement('div');
         jCol.className = 'bar-col';
-        jCol.innerHTML = `<div class="bar ${jClass}"></div><div class="tooltip">W${w}: ${jVal} Sessions</div>`;
+        jCol.innerHTML = `<div class="bar ${jClass}"></div><div class="tooltip">W${w} (${dateLabel}): ${jVal} Sessions</div>`;
         jamieContainer.appendChild(jCol);
       }
     }
@@ -615,9 +627,9 @@
       const progs = ['GT', 'GE', 'GG'];
 
       for (let w = 1; w <= 52; w++) {
-        const weekDate = new Date(2027, 0, (w - 1) * 7 + 1);
-        const monthStr = months[weekDate.getMonth()].substring(0,3);
-        const dateStr = weekDate.getDate();
+        const monday = getMondayOfWeek(w);
+        const monthStr = months[monday.getMonth()];
+        const dateStr = monday.getDate().toString().padStart(2, '0');
 
         const tr = document.createElement('tr');
 
@@ -642,7 +654,6 @@
             const laneContainer = document.createElement('div');
             laneContainer.className = 'lane-container';
 
-            // GT and GG now both have 2 lanes to support overlaps
             const maxLanes = (prog === 'GT' || prog === 'GG') ? 2 : 1;
 
             for (let l = 0; l < maxLanes; l++) {
