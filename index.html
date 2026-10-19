@@ -6,56 +6,243 @@
   <title>2027 Interactive Programme Planner</title>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; margin: 0; background-color: #f8f9fa; color: #202124; display: flex; height: 100vh; overflow: hidden; }
-
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #f8f9fa;
+      color: #202124;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
     /* Sidebar Layout */
-    .sidebar { width: 320px; background: #ffffff; border-right: 1px solid #dadce0; padding: 16px; overflow-y: auto; flex-shrink: 0; }
-    .sidebar h2 { font-size: 15px; margin-top: 0; margin-bottom: 12px; color: #1a73e8; }
-    .cohort-card { background: #f8f9fa; border: 1px solid #dadce0; border-radius: 6px; padding: 10px; margin-bottom: 10px; }
-    .cohort-card h4 { margin: 0 0 6px 0; font-size: 12px; color: #202124; display: flex; justify-content: space-between; }
+    .sidebar {
+      width: 320px;
+      background: #ffffff;
+      border-right: 1px solid #dadce0;
+      padding: 16px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    .sidebar h2 {
+      font-size: 15px;
+      margin-top: 0;
+      margin-bottom: 12px;
+      color: #1a73e8;
+    }
+    .cohort-card {
+      background: #f8f9fa;
+      border: 1px solid #dadce0;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .cohort-card h4 {
+      margin: 0 0 6px 0;
+      font-size: 12px;
+      color: #202124;
+      display: flex;
+      justify-content: space-between;
+    }
     .form-group { margin-bottom: 6px; }
-    .form-group label { display: block; font-size: 10px; font-weight: bold; color: #5f6368; margin-bottom: 2px; }
+    .form-group label {
+      display: block;
+      font-size: 10px;
+      font-weight: bold;
+      color: #5f6368;
+      margin-bottom: 2px;
+    }
     .form-row { display: flex; gap: 6px; }
-    input[type="date"], select, input[type="number"] { width: 100%; padding: 4px; font-size: 11px; border: 1px solid #dadce0; border-radius: 4px; }
+    input[type="date"], select, input[type="number"] {
+      width: 100%;
+      padding: 4px;
+      font-size: 11px;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+    }
 
     /* Main Content Layout */
-    .main-content { flex: 1; padding: 20px; overflow-y: auto; }
-    
-    /* Viewpoint Toggles */
-    .controls-card { background: #ffffff; border: 1px solid #dadce0; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    .btn { padding: 6px 14px; border: 1px solid #dadce0; border-radius: 16px; background: #ffffff; cursor: pointer; font-size: 12px; font-weight: bold; color: #3c4043; transition: all 0.15s ease; }
-    .btn.active { background-color: #1a73e8; color: #ffffff; border-color: #1a73e8; }
+    .main-content {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
 
-    .section-title { font-size: 14px; font-weight: bold; color: #3c4043; margin-top: 0; margin-bottom: 12px; }
+    /* Viewpoint & Action Toggles */
+    .controls-card {
+      background: #ffffff;
+      border: 1px solid #dadce0;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .toggles-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .btn {
+      padding: 6px 14px;
+      border: 1px solid #dadce0;
+      border-radius: 16px;
+      background: #ffffff;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+      color: #3c4043;
+      transition: all 0.15s ease;
+    }
+    .btn.active {
+      background-color: #1a73e8;
+      color: #ffffff;
+      border-color: #1a73e8;
+    }
+    .btn-pdf {
+      background-color: #34a853;
+      color: #ffffff;
+      border-color: #34a853;
+    }
+    .btn-pdf:hover {
+      background-color: #2d9247;
+    }
+    .section-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #3c4043;
+      margin-top: 0;
+      margin-bottom: 12px;
+    }
 
     /* Visual 1: Gantt Chart */
-    .gantt-card { background: #ffffff; border: 1px solid #dadce0; border-radius: 8px; padding: 16px; margin-bottom: 24px; overflow-x: auto; }
-    .weeks-header { display: grid; grid-template-columns: 80px repeat(52, 1fr); border-bottom: 2px solid #e8eaed; padding-bottom: 6px; font-size: 10px; font-weight: bold; text-align: center; color: #5f6368; min-width: 800px; }
-    .programme-row { display: grid; grid-template-columns: 80px 1fr; align-items: center; padding: 6px 0; border-bottom: 1px solid #f1f3f4; min-width: 800px; }
-    .row-label { font-weight: bold; font-size: 12px; color: #3c4043; }
-    
-    .track-container { position: relative; height: 26px; background-color: #f1f3f4; border-radius: 4px; }
-    .week-grid-lines { position: absolute; top:0; left:0; right:0; bottom:0; display: grid; grid-template-columns: repeat(52, 1fr); pointer-events: none; }
+    .gantt-card {
+      background: #ffffff;
+      border: 1px solid #dadce0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+    }
+    .weeks-header {
+      display: grid;
+      grid-template-columns: 80px repeat(52, 1fr);
+      border-bottom: 2px solid #e8eaed;
+      padding-bottom: 6px;
+      font-size: 10px;
+      font-weight: bold;
+      text-align: center;
+      color: #5f6368;
+      min-width: 800px;
+    }
+    .programme-row {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid #f1f3f4;
+      min-width: 800px;
+    }
+    .row-label {
+      font-weight: bold;
+      font-size: 12px;
+      color: #3c4043;
+    }
+    .track-container {
+      position: relative;
+      height: 26px;
+      background-color: #f1f3f4;
+      border-radius: 4px;
+    }
+    .week-grid-lines {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: grid;
+      grid-template-columns: repeat(52, 1fr);
+      pointer-events: none;
+    }
     .week-grid-lines div { border-right: 1px dashed #e8eaed; }
-
-    .block { position: absolute; height: 18px; top: 4px; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; border-radius: 3px; z-index: 2; transition: all 0.2s; }
+    .block {
+      position: absolute;
+      height: 18px;
+      top: 4px;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: bold;
+      border-radius: 3px;
+      z-index: 2;
+      transition: all 0.2s;
+    }
     .bg-GT { background-color: #1a73e8; }
     .bg-GE { background-color: #1e8e3e; }
     .bg-GG { background-color: #d93025; }
 
     /* Visual 2: Workload Bars */
-    .chart-card { background: #ffffff; border: 1px solid #dadce0; border-radius: 8px; padding: 16px; margin-bottom: 24px; }
-    .chart-title { font-size: 13px; font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-    .badge { padding: 2px 8px; border-radius: 10px; font-size: 10px; color: white; font-weight: bold; }
+    .chart-card {
+      background: #ffffff;
+      border: 1px solid #dadce0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+    .chart-title {
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 10px;
+      color: white;
+      font-weight: bold;
+    }
     .badge-dave { background-color: #1a73e8; }
     .badge-jamie { background-color: #1e8e3e; }
-
-    .chart-grid { display: grid; grid-template-columns: repeat(52, 1fr); gap: 2px; align-items: flex-end; height: 80px; border-bottom: 2px solid #dadce0; padding-bottom: 4px; min-width: 800px; }
-    .bar-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; position: relative; }
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(52, 1fr);
+      gap: 2px;
+      align-items: flex-end;
+      height: 80px;
+      border-bottom: 2px solid #dadce0;
+      padding-bottom: 4px;
+      min-width: 800px;
+    }
+    .bar-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      height: 100%;
+      position: relative;
+    }
     .bar { width: 100%; border-radius: 2px 2px 0 0; }
-    .bar-col .tooltip { display: none; position: absolute; bottom: 105%; left: 50%; transform: translateX(-50%); background-color: #202124; color: #ffffff; padding: 4px 6px; border-radius: 4px; font-size: 9px; white-space: nowrap; z-index: 10; }
+    .bar-col .tooltip {
+      display: none;
+      position: absolute;
+      bottom: 105%;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #202124;
+      color: #ffffff;
+      padding: 4px 6px;
+      border-radius: 4px;
+      font-size: 9px;
+      white-space: nowrap;
+      z-index: 10;
+    }
     .bar-col:hover .tooltip { display: block; }
-
     .load-0 { height: 2px; background-color: #e8eaed; }
     .load-1 { height: 20%; background-color: #8ab4f8; }
     .load-2 { height: 40%; background-color: #4285f4; }
@@ -64,31 +251,120 @@
     .load-5 { height: 100%; background-color: #b31412; }
 
     /* Visual 3: Continuous Vertical Matrix Table */
-    .matrix-card { background: #ffffff; border: 1px solid #dadce0; border-radius: 8px; padding: 16px; margin-bottom: 24px; }
-    .matrix-table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
-    .matrix-table th { background: #f1f3f4; color: #3c4043; padding: 8px; border: 1px solid #dadce0; font-weight: bold; text-align: center; position: sticky; top: 0; z-index: 5; }
-    .matrix-table td { border: 1px solid #e8eaed; padding: 0; vertical-align: top; height: 28px; }
+    .matrix-card {
+      background: #ffffff;
+      border: 1px solid #dadce0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      table-layout: fixed;
+    }
+    .matrix-table th {
+      background: #f1f3f4;
+      color: #3c4043;
+      padding: 8px;
+      border: 1px solid #dadce0;
+      font-weight: bold;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+    .matrix-table td {
+      border: 1px solid #e8eaed;
+      padding: 0;
+      vertical-align: top;
+      height: 28px;
+    }
 
-    /* Matrix Column Widths */
+    /* Proportional Matrix Column Widths */
     .col-week { width: 140px; }
-    .col-gt   { width: 36%; }
-    .col-ge   { width: 18%; }
-    .col-gg   { width: 36%; }
-
-    .week-label-cell { width: 140px; font-weight: bold; color: #1a73e8; background: #fafafa; padding: 6px !important; }
-    .empty-cell { color: #bdc1c6; font-style: italic; font-size: 10px; text-align: center; line-height: 28px; }
-
-    .lane-container { display: flex; width: 100%; height: 100%; }
-    .lane { flex: 1; height: 100%; padding: 0 2px; }
-
-    .v-line { width: 100%; height: 100%; color: #ffffff; font-weight: bold; font-size: 10px; padding: 2px 4px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; }
+    .col-gt   { width: 35%; }
+    .col-ge   { width: 20%; }
+    .col-gg   { width: 35%; }
+    .week-label-cell {
+      width: 140px;
+      font-weight: bold;
+      color: #1a73e8;
+      background: #fafafa;
+      padding: 6px !important;
+    }
+    .empty-cell {
+      color: #bdc1c6;
+      font-style: italic;
+      font-size: 10px;
+      text-align: center;
+      line-height: 28px;
+    }
+    .lane-container {
+      display: flex;
+      width: 100%;
+      height: 100%;
+    }
+    .lane {
+      flex: 1;
+      height: 100%;
+      padding: 0 2px;
+    }
+    .v-line {
+      width: 100%;
+      height: 100%;
+      color: #ffffff;
+      font-weight: bold;
+      font-size: 10px;
+      padding: 2px 4px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
     .v-line-gt { background-color: #1a73e8; }
     .v-line-ge { background-color: #1e8e3e; }
     .v-line-gg { background-color: #d93025; }
+    .v-start {
+      border-top-left-radius: 5px;
+      border-top-right-radius: 5px;
+    }
+    .v-end {
+      border-bottom-left-radius: 5px;
+      border-bottom-right-radius: 5px;
+    }
+    .v-meta {
+      font-size: 9px;
+      font-weight: normal;
+      opacity: 0.95;
+    }
 
-    .v-start { border-top-left-radius: 5px; border-top-right-radius: 5px; }
-    .v-end { border-bottom-left-radius: 5px; border-bottom-right-radius: 5px; }
-    .v-meta { font-size: 9px; font-weight: normal; opacity: 0.95; }
+    /* Print Styles for PDF Export */
+    @media print {
+      body {
+        height: auto;
+        overflow: visible;
+        background: #ffffff;
+      }
+      .sidebar, .controls-card {
+        display: none !important;
+      }
+      .main-content {
+        padding: 0;
+        overflow: visible;
+      }
+      .matrix-card > div {
+        max-height: none !important;
+        overflow: visible !important;
+      }
+      .gantt-card, .chart-card, .matrix-card {
+        border: none;
+        padding: 0;
+        margin-bottom: 20px;
+        page-break-inside: avoid;
+      }
+    }
   </style>
 </head>
 <body>
@@ -101,13 +377,15 @@
 
   <!-- MAIN CONTENT AREA -->
   <div class="main-content">
-
-    <!-- MASTER TOGGLES -->
+    <!-- MASTER TOGGLES & ACTIONS -->
     <div class="controls-card">
-      <span style="font-size: 12px; font-weight: bold;">Viewpoint:</span>
-      <button class="btn active" id="btn-all">All Programmes</button>
-      <button class="btn" id="btn-dave">Dave's View</button>
-      <button class="btn" id="btn-jamie">Jamie's View</button>
+      <div class="toggles-group">
+        <span style="font-size: 12px; font-weight: bold;">Viewpoint:</span>
+        <button class="btn active" id="btn-all">All Programmes</button>
+        <button class="btn" id="btn-dave">Dave's View</button>
+        <button class="btn" id="btn-jamie">Jamie's View</button>
+      </div>
+      <button class="btn btn-pdf" id="btn-pdf">📄 Download PDF</button>
     </div>
 
     <!-- VISUAL 1: GANTT CHART -->
@@ -152,280 +430,313 @@
         </table>
       </div>
     </div>
-
   </div>
 
   <script>
     let activeFilter = 'All';
 
-    // Default cohorts updated to match currently entered dates and roles
     const cohorts = [
-      { id: 'GT1', name: 'GT1', prog: 'GT', startDate: '2027-02-15', endDate: '2027-03-05', leader: 'Dave', leadSess: 3, support: 'Jamie', suppSess: 0 },
-      { id: 'GT2', name: 'GT2', prog: 'GT', startDate: '2027-03-01', endDate: '2027-03-19', leader: 'Jamie', leadSess: 3, support: 'Dave', suppSess: 0 },
-      { id: 'GT3', name: 'GT3', prog: 'GT', startDate: '2027-04-19', endDate: '2027-05-14', leader: 'Dave', leadSess: 3, support: 'Jamie', suppSess: 2 },
-      { id: 'GT4', name: 'GT4', prog: 'GT', startDate: '2027-05-24', endDate: '2027-06-18', leader: 'Jamie', leadSess: 3, support: 'Dave', suppSess: 2 },
-      { id: 'GT5', name: 'GT5', prog: 'GT', startDate: '2027-07-19', endDate: '2027-08-13', leader: 'Dave', leadSess: 3, support: 'Jamie', suppSess: 0 },
-      { id: 'GT6', name: 'GT6', prog: 'GT', startDate: '2027-08-23', endDate: '2027-09-17', leader: 'Jamie', leadSess: 3, support: 'Dave', suppSess: 2 },
-      { id: 'GE1', name: 'GE1', prog: 'GE', startDate: '2027-04-05', endDate: '2027-06-11', leader: 'Dave & Jamie', leadSess: 1, support: 'None', suppSess: 0 },
-      { id: 'GE2', name: 'GE2', prog: 'GE', startDate: '2027-06-28', endDate: '2027-09-03', leader: 'Dave & Jamie', leadSess: 1, support: 'None', suppSess: 0 },
-      { id: 'GE3', name: 'GE3', prog: 'GE', startDate: '2027-09-20', endDate: '2027-11-26', leader: 'Dave & Jamie', leadSess: 1, support: 'None', suppSess: 0 },
-      { id: 'GG1', name: 'GG1', prog: 'GG', startDate: '2027-07-05', endDate: '2027-08-09', leader: 'Jamie', leadSess: 2, support: 'Jamie', suppSess: 0 },
-      { id: 'GG2', name: 'GG2', prog: 'GG', startDate: '2027-10-04', endDate: '2027-11-09', leader: 'Dave', leadSess: 2, support: 'Dave', suppSess: 0 },
-      { id: 'GG3', name: 'GG3', prog: 'GG', startDate: '2027-10-18', endDate: '2027-11-22', leader: 'Jamie', leadSess: 2, support: 'None', suppSess: 0 }
+      { id: 'GT1', programme: 'GT', start: '2027-02-15', end: '2027-03-12', lead: 'Dave', leadSessions: 3, support: 'Jamie', supportSessions: 0 },
+      { id: 'GT2', programme: 'GT', start: '2027-03-01', end: '2027-03-26', lead: 'Jamie', leadSessions: 3, support: 'Dave', supportSessions: 0 },
+      { id: 'GT3', programme: 'GT', start: '2027-04-19', end: '2027-05-14', lead: 'Dave', leadSessions: 3, support: 'Jamie', supportSessions: 0 },
+      { id: 'GT4', programme: 'GT', start: '2027-05-24', end: '2027-06-18', lead: 'Jamie', leadSessions: 3, support: 'Dave', supportSessions: 0 },
+      { id: 'GT5', programme: 'GT', start: '2027-07-19', end: '2027-08-13', lead: 'Dave', leadSessions: 3, support: 'Jamie', supportSessions: 0 },
+      { id: 'GT6', programme: 'GT', start: '2027-08-23', end: '2027-09-17', lead: 'Jamie', leadSessions: 3, support: 'Dave', supportSessions: 0 },
+      { id: 'GE1', programme: 'GE', start: '2027-04-05', end: '2027-06-11', lead: 'Dave and Jamie', leadSessions: 1, support: 'None', supportSessions: 0 },
+      { id: 'GE2', programme: 'GE', start: '2027-06-28', end: '2027-09-03', lead: 'Dave and Jamie', leadSessions: 1, support: 'None', supportSessions: 0 },
+      { id: 'GE3', programme: 'GE', start: '2027-09-20', end: '2027-11-26', lead: 'Dave and Jamie', leadSessions: 1, support: 'None', supportSessions: 0 },
+      { id: 'GG1', programme: 'GG', start: '2027-10-04', end: '2027-10-29', lead: 'Dave', leadSessions: 2, support: 'Jamie', supportSessions: 0 },
+      { id: 'GG2', programme: 'GG', start: '2027-11-01', end: '2027-11-26', lead: 'Jamie', leadSessions: 2, support: 'Dave', supportSessions: 0 },
+      { id: 'GG3', programme: 'GG', start: '2027-11-29', end: '2027-12-24', lead: 'Dave and Jamie', leadSessions: 2, support: 'None', supportSessions: 0 }
     ];
 
-    // Helper functions for date & week calculations
-    const startOfYear2027 = new Date('2027-01-04T00:00:00'); // Week 1 start (Monday)
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    function parseDate(str) {
+      if (!str) return new Date(2027, 0, 1);
+      const parts = str.split('-');
+      return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    }
+
+    function getMondayOfWeek(w) {
+      const firstMonday = new Date(2027, 0, 4);
+      const monday = new Date(firstMonday);
+      monday.setDate(firstMonday.getDate() + (w - 1) * 7);
+      return monday;
+    }
 
     function getWeekNumber(dateStr) {
-      if (!dateStr) return 1;
-      const d = new Date(dateStr + 'T00:00:00');
-      const diffDays = Math.floor((d - startOfYear2027) / (1000 * 60 * 60 * 24));
+      const d = parseDate(dateStr);
+      const start = new Date(2027, 0, 1);
+      const diffDays = Math.floor((d - start) / 86400000);
       return Math.max(1, Math.min(52, Math.floor(diffDays / 7) + 1));
     }
 
-    function getWeekStartDate(weekNum) {
-      const d = new Date(startOfYear2027);
-      d.setDate(d.getDate() + (weekNum - 1) * 7);
-      return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+    function isPersonInvolved(item, person) {
+      if (!item) return false;
+      if (person === 'All') return true;
+      const isLead = item.lead && item.lead.indexOf(person) !== -1;
+      const isSupport = item.support === person && item.supportSessions > 0;
+      return isLead || isSupport;
     }
 
-    // Event Listeners & Setup
-    document.addEventListener('DOMContentLoaded', () => {
-      setupViewpointToggles();
-      renderSidebarControls();
-      renderAll();
-    });
-
-    function setupViewpointToggles() {
-      const btnAll = document.getElementById('btn-all');
-      const btnDave = document.getElementById('btn-dave');
-      const btnJamie = document.getElementById('btn-jamie');
-
-      const setView = (filter, activeBtn) => {
-        activeFilter = filter;
-        [btnAll, btnDave, btnJamie].forEach(b => b.classList.remove('active'));
-        activeBtn.classList.add('active');
-        renderAll();
-      };
-
-      btnAll.addEventListener('click', () => setView('All', btnAll));
-      btnDave.addEventListener('click', () => setView('Dave', btnDave));
-      btnJamie.addEventListener('click', () => setView('Jamie', btnJamie));
-    }
-
-    function renderAll() {
-      renderGantt();
-      renderWorkloadCharts();
-      renderMatrix();
-    }
-
-    // Sidebar Input Controls
-    function renderSidebarControls() {
-      const container = document.getElementById('sidebar-controls');
-      container.innerHTML = '';
-
-      cohorts.forEach((c, idx) => {
-        const card = document.createElement('div');
-        card.className = 'cohort-card';
-        card.innerHTML = `
-          <h4><span>${c.name} (${c.prog})</span></h4>
-          <div class="form-row">
-            <div class="form-group" style="flex:1;">
-              <label>Start</label>
-              <input type="date" value="${c.startDate}" onchange="updateCohort(${idx}, 'startDate', this.value)">
-            </div>
-            <div class="form-group" style="flex:1;">
-              <label>End</label>
-              <input type="date" value="${c.endDate}" onchange="updateCohort(${idx}, 'endDate', this.value)">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group" style="flex:1;">
-              <label>Lead</label>
-              <select onchange="updateCohort(${idx}, 'leader', this.value)">
-                <option value="Dave" ${c.leader === 'Dave' ? 'selected' : ''}>Dave</option>
-                <option value="Jamie" ${c.leader === 'Jamie' ? 'selected' : ''}>Jamie</option>
-                <option value="Dave & Jamie" ${c.leader === 'Dave & Jamie' ? 'selected' : ''}>Dave & Jamie</option>
-              </select>
-            </div>
-            <div class="form-group" style="flex:1;">
-              <label>Lead Sess/Wk</label>
-              <input type="number" min="0" max="10" value="${c.leadSess}" onchange="updateCohort(${idx}, 'leadSess', parseInt(this.value)||0)">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group" style="flex:1;">
-              <label>Support</label>
-              <select onchange="updateCohort(${idx}, 'support', this.value)">
-                <option value="None" ${c.support === 'None' ? 'selected' : ''}>None</option>
-                <option value="Dave" ${c.support === 'Dave' ? 'selected' : ''}>Dave</option>
-                <option value="Jamie" ${c.support === 'Jamie' ? 'selected' : ''}>Jamie</option>
-              </select>
-            </div>
-            <div class="form-group" style="flex:1;">
-              <label>Supp Sess/Wk</label>
-              <input type="number" min="0" max="10" value="${c.suppSess}" onchange="updateCohort(${idx}, 'suppSess', parseInt(this.value)||0)">
-            </div>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    window.updateCohort = function(index, key, value) {
-      cohorts[index][key] = value;
-      renderAll();
-    };
-
-    // Render Visual 1: Gantt Timeline
-    function renderGantt() {
+    function initHeader() {
       const header = document.getElementById('weeks-header');
+      if (!header) return;
       header.innerHTML = '<div style="text-align: left;">Cohort</div>';
-      for (let w = 1; w <= 52; w++) {
+      for (let i = 1; i <= 52; i++) {
         const div = document.createElement('div');
-        div.textContent = `W${w}`;
+        div.textContent = 'W' + i;
         header.appendChild(div);
       }
+    }
 
-      const rowsContainer = document.getElementById('gantt-rows');
-      rowsContainer.innerHTML = '';
+    function renderSidebar() {
+      const container = document.getElementById('sidebar-controls');
+      if (!container) return;
+      container.innerHTML = '';
 
-      const filtered = cohorts.filter(c => {
-        if (activeFilter === 'All') return true;
-        return c.leader.includes(activeFilter) || c.support === activeFilter;
+      cohorts.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'cohort-card';
+
+        const title = document.createElement('h4');
+        title.textContent = `${item.id} (${item.programme})`;
+        card.appendChild(title);
+
+        const row1 = document.createElement('div');
+        row1.className = 'form-group';
+        row1.innerHTML = `
+          <div class="form-row">
+            <div><label>Start</label><input type="date" value="${item.start}" data-index="${index}" data-key="start"></div>
+            <div><label>End</label><input type="date" value="${item.end}" data-index="${index}" data-key="end"></div>
+          </div>
+        `;
+        card.appendChild(row1);
+
+        const row2 = document.createElement('div');
+        row2.className = 'form-group';
+        row2.innerHTML = `
+          <div class="form-row">
+            <div>
+              <label>Lead</label>
+              <select data-index="${index}" data-key="lead">
+                <option value="Dave" ${item.lead === 'Dave' ? 'selected' : ''}>Dave</option>
+                <option value="Jamie" ${item.lead === 'Jamie' ? 'selected' : ''}>Jamie</option>
+                <option value="Dave and Jamie" ${item.lead === 'Dave and Jamie' ? 'selected' : ''}>Dave & Jamie</option>
+              </select>
+            </div>
+            <div><label>Lead Sess/Wk</label><input type="number" min="0" max="5" value="${item.leadSessions}" data-index="${index}" data-key="leadSessions"></div>
+          </div>
+        `;
+        card.appendChild(row2);
+
+        const row3 = document.createElement('div');
+        row3.className = 'form-group';
+        row3.innerHTML = `
+          <div class="form-row">
+            <div>
+              <label>Support</label>
+              <select data-index="${index}" data-key="support">
+                <option value="None" ${item.support === 'None' ? 'selected' : ''}>None</option>
+                <option value="Dave" ${item.support === 'Dave' ? 'selected' : ''}>Dave</option>
+                <option value="Jamie" ${item.support === 'Jamie' ? 'selected' : ''}>Jamie</option>
+              </select>
+            </div>
+            <div><label>Supp Sess/Wk</label><input type="number" min="0" max="5" value="${item.supportSessions}" data-index="${index}" data-key="supportSessions"></div>
+          </div>
+        `;
+        card.appendChild(row3);
+
+        container.appendChild(card);
       });
 
-      filtered.forEach(c => {
-        const startW = getWeekNumber(c.startDate);
-        const endW = getWeekNumber(c.endDate);
-        const duration = Math.max(1, endW - startW + 1);
+      container.querySelectorAll('input, select').forEach(el => {
+        el.addEventListener('change', (e) => {
+          const idx = parseInt(e.target.getAttribute('data-index'), 10);
+          const key = e.target.getAttribute('data-key');
+          if (cohorts[idx]) {
+            let val = e.target.value;
+            if (key === 'leadSessions' || key === 'supportSessions') {
+              val = parseInt(val, 10) || 0;
+            }
+            cohorts[idx][key] = val;
+            renderAll();
+          }
+        });
+      });
+    }
+
+    function renderGantt() {
+      const container = document.getElementById('gantt-rows');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const yearStart = new Date(2027, 0, 1).getTime();
+      const yearEnd = new Date(2027, 11, 31).getTime();
+      const totalYearMs = yearEnd - yearStart;
+
+      cohorts.forEach(item => {
+        if (!isPersonInvolved(item, activeFilter)) return;
 
         const row = document.createElement('div');
         row.className = 'programme-row';
 
         const label = document.createElement('div');
         label.className = 'row-label';
-        label.textContent = c.id;
+        label.textContent = item.id;
 
         const track = document.createElement('div');
         track.className = 'track-container';
 
         const grid = document.createElement('div');
         grid.className = 'week-grid-lines';
-        for (let i = 0; i < 52; i++) grid.appendChild(document.createElement('div'));
+        for (let i = 0; i < 52; i++) {
+          grid.appendChild(document.createElement('div'));
+        }
         track.appendChild(grid);
 
-        const leftPct = ((startW - 1) / 52) * 100;
-        const widthPct = (duration / 52) * 100;
+        const startMs = parseDate(item.start).getTime();
+        const endMs = parseDate(item.end).getTime() + 86400000; // include full end day
+
+        const leftPercent = Math.max(0, ((startMs - yearStart) / totalYearMs) * 100);
+        const widthPercent = Math.min(100 - leftPercent, ((endMs - startMs) / totalYearMs) * 100);
 
         const block = document.createElement('div');
-        block.className = `block bg-${c.prog}`;
-        block.style.left = `${leftPct}%`;
-        block.style.width = `${widthPct}%`;
-        block.textContent = c.id;
+        block.className = `block bg-${item.programme}`;
+        block.style.left = `${leftPercent}%`;
+        block.style.width = `${widthPercent}%`;
+        block.textContent = item.id;
 
         track.appendChild(block);
         row.appendChild(label);
         row.appendChild(track);
-        rowsContainer.appendChild(row);
+
+        container.appendChild(row);
       });
     }
 
-    // Render Visual 2: Workload Charts
-    function renderWorkloadCharts() {
-      renderSingleWorkload('Dave', 'dave-chart');
-      renderSingleWorkload('Jamie', 'jamie-chart');
-    }
+    function renderCharts() {
+      const daveData = new Array(53).fill(0);
+      const jamieData = new Array(53).fill(0);
 
-    function renderSingleWorkload(leaderName, containerId) {
-      const container = document.getElementById(containerId);
-      container.innerHTML = '';
+      cohorts.forEach(item => {
+        if (!item) return;
+        const startW = getWeekNumber(item.start);
+        const endW = getWeekNumber(item.end);
+
+        let dSess = 0, jSess = 0;
+        if (item.lead && item.lead.indexOf('Dave') !== -1) dSess += item.leadSessions;
+        if (item.support === 'Dave') dSess += item.supportSessions;
+
+        if (item.lead && item.lead.indexOf('Jamie') !== -1) jSess += item.leadSessions;
+        if (item.support === 'Jamie') jSess += item.supportSessions;
+
+        for (let w = startW; w <= endW && w <= 52; w++) {
+          daveData[w] += dSess;
+          jamieData[w] += jSess;
+        }
+      });
+
+      const daveContainer = document.getElementById('dave-chart');
+      const jamieContainer = document.getElementById('jamie-chart');
+      if (!daveContainer || !jamieContainer) return;
+
+      daveContainer.innerHTML = '';
+      jamieContainer.innerHTML = '';
 
       for (let w = 1; w <= 52; w++) {
-        let weeklySessions = 0;
-        cohorts.forEach(c => {
-          const startW = getWeekNumber(c.startDate);
-          const endW = getWeekNumber(c.endDate);
+        const monday = getMondayOfWeek(w);
+        const dateLabel = `${monday.getDate().toString().padStart(2, '0')} ${months[monday.getMonth()]}`;
 
-          if (w >= startW && w <= endW) {
-            if (c.leader.includes(leaderName)) {
-              weeklySessions += c.leadSess;
-            }
-            if (c.support === leaderName) {
-              weeklySessions += c.suppSess;
-            }
-          }
-        });
+        const dVal = daveData[w];
+        const dClass = dVal >= 5 ? 'load-5' : `load-${dVal}`;
+        const dCol = document.createElement('div');
+        dCol.className = 'bar-col';
+        dCol.innerHTML = `<div class="bar ${dClass}"></div><div class="tooltip">W${w} (${dateLabel}): ${dVal} Sessions</div>`;
+        daveContainer.appendChild(dCol);
 
-        const loadClass = `load-${Math.min(weeklySessions, 5)}`;
-        const col = document.createElement('div');
-        col.className = 'bar-col';
-        
-        col.innerHTML = `
-          <div class="tooltip">Wk ${w}: ${weeklySessions} sessions</div>
-          <div class="bar ${loadClass}"></div>
-        `;
-        container.appendChild(col);
+        const jVal = jamieData[w];
+        const jClass = jVal >= 5 ? 'load-5' : `load-${jVal}`;
+        const jCol = document.createElement('div');
+        jCol.className = 'bar-col';
+        jCol.innerHTML = `<div class="bar ${jClass}"></div><div class="tooltip">W${w} (${dateLabel}): ${jVal} Sessions</div>`;
+        jamieContainer.appendChild(jCol);
       }
     }
 
-    // Render Visual 3: Continuous Vertical Matrix
     function renderMatrix() {
       const tbody = document.getElementById('matrix-body');
+      if (!tbody) return;
       tbody.innerHTML = '';
 
+      const progs = ['GT', 'GE', 'GG'];
+
       for (let w = 1; w <= 52; w++) {
+        const monday = getMondayOfWeek(w);
+        const monthStr = months[monday.getMonth()];
+        const dateStr = monday.getDate().toString().padStart(2, '0');
+
         const tr = document.createElement('tr');
 
         const tdWeek = document.createElement('td');
         tdWeek.className = 'week-label-cell';
-        tdWeek.textContent = `Week ${w} (${getWeekStartDate(w)})`;
+        tdWeek.innerHTML = `Week ${w} <span style="font-size:9px; color:#5f6368; font-weight:normal;">(${dateStr} ${monthStr})</span>`;
         tr.appendChild(tdWeek);
 
-        ['GT', 'GE', 'GG'].forEach(prog => {
-          const td = document.createElement('td');
-          const activeInProg = cohorts.filter(c => {
-            const startW = getWeekNumber(c.startDate);
-            const endW = getWeekNumber(c.endDate);
-            const isWeekActive = w >= startW && w <= endW;
-            const isFiltered = activeFilter === 'All' || c.leader.includes(activeFilter) || c.support === activeFilter;
-            return c.prog === prog && isWeekActive && isFiltered;
+        progs.forEach(prog => {
+          const matching = cohorts.filter(c => {
+            if (!c || c.programme !== prog || !isPersonInvolved(c, activeFilter)) return false;
+            const sW = getWeekNumber(c.start);
+            const eW = getWeekNumber(c.end);
+            return w >= sW && w <= eW;
           });
 
-          if (activeInProg.length === 0) {
-            td.className = 'empty-cell';
-            td.textContent = '—';
+          const td = document.createElement('td');
+
+          if (matching.length === 0) {
+            td.innerHTML = '<div class="empty-cell">&mdash;</div>';
           } else {
             const laneContainer = document.createElement('div');
             laneContainer.className = 'lane-container';
 
-            activeInProg.forEach(c => {
-              const startW = getWeekNumber(c.startDate);
-              const endW = getWeekNumber(c.endDate);
-              const isStart = w === startW;
-              const isEnd = w === endW;
+            const maxLanes = (prog === 'GT' || prog === 'GG') ? 2 : 1;
 
+            for (let l = 0; l < maxLanes; l++) {
               const lane = document.createElement('div');
               lane.className = 'lane';
 
-              let radiusClass = '';
-              if (isStart) radiusClass += ' v-start';
-              if (isEnd) radiusClass += ' v-end';
+              const matchedItem = matching.find(c => {
+                if (maxLanes === 1) return true;
+                const num = parseInt(c.id.replace(/\D/g, ''), 10) || 1;
+                return (num % 2 !== 0) ? (l === 0) : (l === 1);
+              });
 
-              let leaderText = c.leader;
-              if (c.support !== 'None') {
-                leaderText += ` & ${c.support}`;
+              if (matchedItem) {
+                const sW = getWeekNumber(matchedItem.start);
+                const eW = getWeekNumber(matchedItem.end);
+                const isStart = (w === sW);
+                const isEnd = (w === eW);
+
+                let sessStr = `${matchedItem.leadSessions}s/wk`;
+                if (activeFilter !== 'All' && matchedItem.support === activeFilter) {
+                  sessStr = `${matchedItem.supportSessions}s/wk (Supp)`;
+                }
+
+                const line = document.createElement('div');
+                let cls = `v-line v-line-${prog.toLowerCase()}`;
+                if (isStart) cls += ' v-start';
+                if (isEnd) cls += ' v-end';
+                line.className = cls;
+
+                if (isStart) {
+                  line.innerHTML = `<div>${matchedItem.id}</div><div class="v-meta">${matchedItem.lead} (${sessStr})</div>`;
+                }
+
+                lane.appendChild(line);
               }
-
-              lane.innerHTML = `
-                <div class="v-line v-line-${c.prog.toLowerCase()} ${radiusClass}">
-                  ${isStart ? `<span>${c.name}</span>` : ''}
-                  <span class="v-meta">${leaderText} (${c.leadSess + c.suppSess}s/wk)</span>
-                </div>
-              `;
               laneContainer.appendChild(lane);
-            });
+            }
             td.appendChild(laneContainer);
           }
           tr.appendChild(td);
@@ -433,6 +744,53 @@
 
         tbody.appendChild(tr);
       }
+    }
+
+    function setupControls() {
+      const setFilter = (filter, btn) => {
+        activeFilter = filter;
+        document.querySelectorAll('.controls-card .btn').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        renderAll();
+      };
+
+      const btnAll = document.getElementById('btn-all');
+      const btnDave = document.getElementById('btn-dave');
+      const btnJamie = document.getElementById('btn-jamie');
+      const btnPdf = document.getElementById('btn-pdf');
+
+      if (btnAll) btnAll.onclick = () => setFilter('All', btnAll);
+      if (btnDave) btnDave.onclick = () => setFilter('Dave', btnDave);
+      if (btnJamie) btnJamie.onclick = () => setFilter('Jamie', btnJamie);
+
+      if (btnPdf) {
+        btnPdf.onclick = () => {
+          window.print();
+        };
+      }
+    }
+
+    function renderAll() {
+      renderGantt();
+      renderCharts();
+      renderMatrix();
+    }
+
+    function init() {
+      try {
+        initHeader();
+        setupControls();
+        renderSidebar();
+        renderAll();
+      } catch (err) {
+        console.error("Initialization error:", err);
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
     }
   </script>
 </body>
