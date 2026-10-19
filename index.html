@@ -71,18 +71,16 @@
 
     /* Proportional Matrix Column Widths */
     .col-week { width: 140px; }
-    .col-gt   { width: 40%; }  /* Holds 2 sub-lanes (20% width each) */
-    .col-ge   { width: 20%; }  /* Matches width of 1 GT sub-lane */
-    .col-gg   { width: 20%; }  /* Matches width of 1 GT sub-lane */
+    .col-gt   { width: 40%; }
+    .col-ge   { width: 20%; }
+    .col-gg   { width: 20%; }
 
     .week-label-cell { width: 140px; font-weight: bold; color: #1a73e8; background: #fafafa; padding: 6px !important; }
     .empty-cell { color: #bdc1c6; font-style: italic; font-size: 10px; text-align: center; line-height: 28px; }
 
-    /* Split Lane Container */
     .lane-container { display: flex; width: 100%; height: 100%; }
     .lane { flex: 1; height: 100%; padding: 0 2px; }
 
-    /* Continuous Seamless Vertical Line Block */
     .v-line { width: 100%; height: 100%; color: #ffffff; font-weight: bold; font-size: 10px; padding: 2px 4px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; }
     .v-line-gt { background-color: #1a73e8; }
     .v-line-ge { background-color: #1e8e3e; }
@@ -158,7 +156,6 @@
   </div>
 
   <script>
-    // --- STATE DATA ---
     let activeFilter = 'All';
 
     const cohorts = [
@@ -178,7 +175,6 @@
 
     const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-    // --- UTILS ---
     function parseDate(str) {
       if (!str) return new Date(2027, 0, 1);
       const parts = str.split('-');
@@ -193,13 +189,13 @@
     }
 
     function isPersonInvolved(item, person) {
+      if (!item) return false;
       if (person === 'All') return true;
-      const isLead = item.lead.indexOf(person) !== -1;
+      const isLead = item.lead && item.lead.indexOf(person) !== -1;
       const isSupport = item.support === person && item.supportSessions > 0;
       return isLead || isSupport;
     }
 
-    // --- RENDERING ---
     function initHeader() {
       const header = document.getElementById('weeks-header');
       if (!header) return;
@@ -271,17 +267,18 @@
         container.appendChild(card);
       });
 
-      // Bind input events cleanly
       container.querySelectorAll('input, select').forEach(el => {
         el.addEventListener('change', (e) => {
           const idx = parseInt(e.target.getAttribute('data-index'), 10);
           const key = e.target.getAttribute('data-key');
-          let val = e.target.value;
-          if (key === 'leadSessions' || key === 'supportSessions') {
-            val = parseInt(val, 10) || 0;
+          if (cohorts[idx]) {
+            let val = e.target.value;
+            if (key === 'leadSessions' || key === 'supportSessions') {
+              val = parseInt(val, 10) || 0;
+            }
+            cohorts[idx][key] = val;
+            renderAll();
           }
-          cohorts[idx][key] = val;
-          renderAll();
         });
       });
     }
@@ -306,4 +303,197 @@
 
         const grid = document.createElement('div');
         grid.className = 'week-grid-lines';
-        for (let i =
+        for (let i = 0; i < 52; i++) {
+          grid.appendChild(document.createElement('div'));
+        }
+        track.appendChild(grid);
+
+        const sW = getWeekNumber(item.start);
+        const eW = getWeekNumber(item.end);
+
+        const leftPercent = ((sW - 1) / 52) * 100;
+        const widthPercent = Math.max(1.8, ((eW - sW + 1) / 52) * 100);
+
+        const block = document.createElement('div');
+        block.className = `block bg-${item.programme}`;
+        block.style.left = `${leftPercent}%`;
+        block.style.width = `${widthPercent}%`;
+        block.textContent = item.id;
+
+        track.appendChild(block);
+        row.appendChild(label);
+        row.appendChild(track);
+        container.appendChild(row);
+      });
+    }
+
+    function renderCharts() {
+      const daveData = new Array(53).fill(0);
+      const jamieData = new Array(53).fill(0);
+
+      cohorts.forEach(item => {
+        if (!item) return;
+        const startW = getWeekNumber(item.start);
+        const endW = getWeekNumber(item.end);
+
+        let dSess = 0, jSess = 0;
+        if (item.lead && item.lead.indexOf('Dave') !== -1) dSess += item.leadSessions;
+        if (item.support === 'Dave') dSess += item.supportSessions;
+
+        if (item.lead && item.lead.indexOf('Jamie') !== -1) jSess += item.leadSessions;
+        if (item.support === 'Jamie') jSess += item.supportSessions;
+
+        for (let w = startW; w <= endW && w <= 52; w++) {
+          daveData[w] += dSess;
+          jamieData[w] += jSess;
+        }
+      });
+
+      const daveContainer = document.getElementById('dave-chart');
+      const jamieContainer = document.getElementById('jamie-chart');
+      if (!daveContainer || !jamieContainer) return;
+      daveContainer.innerHTML = '';
+      jamieContainer.innerHTML = '';
+
+      for (let w = 1; w <= 52; w++) {
+        const dVal = daveData[w];
+        const dClass = dVal >= 5 ? 'load-5' : `load-${dVal}`;
+        const dCol = document.createElement('div');
+        dCol.className = 'bar-col';
+        dCol.innerHTML = `<div class="bar ${dClass}"></div><div class="tooltip">W${w}: ${dVal} Sessions</div>`;
+        daveContainer.appendChild(dCol);
+
+        const jVal = jamieData[w];
+        const jClass = jVal >= 5 ? 'load-5' : `load-${jVal}`;
+        const jCol = document.createElement('div');
+        jCol.className = 'bar-col';
+        jCol.innerHTML = `<div class="bar ${jClass}"></div><div class="tooltip">W${w}: ${jVal} Sessions</div>`;
+        jamieContainer.appendChild(jCol);
+      }
+    }
+
+    function renderMatrix() {
+      const tbody = document.getElementById('matrix-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const progs = ['GT', 'GE', 'GG'];
+
+      for (let w = 1; w <= 52; w++) {
+        const weekDate = new Date(2027, 0, (w - 1) * 7 + 1);
+        const monthStr = months[weekDate.getMonth()].substring(0,3);
+        const dateStr = weekDate.getDate();
+
+        const tr = document.createElement('tr');
+
+        const tdWeek = document.createElement('td');
+        tdWeek.className = 'week-label-cell';
+        tdWeek.innerHTML = `Week ${w} <span style="font-size:9px; color:#5f6368; font-weight:normal;">(${dateStr} ${monthStr})</span>`;
+        tr.appendChild(tdWeek);
+
+        progs.forEach(prog => {
+          const matching = cohorts.filter(c => {
+            if (!c || c.programme !== prog || !isPersonInvolved(c, activeFilter)) return false;
+            const sW = getWeekNumber(c.start);
+            const eW = getWeekNumber(c.end);
+            return w >= sW && w <= eW;
+          });
+
+          const td = document.createElement('td');
+
+          if (matching.length === 0) {
+            td.innerHTML = '<div class="empty-cell">&mdash;</div>';
+          } else {
+            const laneContainer = document.createElement('div');
+            laneContainer.className = 'lane-container';
+            const maxLanes = (prog === 'GT') ? 2 : 1;
+
+            for (let l = 0; l < maxLanes; l++) {
+              const lane = document.createElement('div');
+              lane.className = 'lane';
+
+              const matchedItem = matching.find(c => {
+                if (maxLanes === 1) return true;
+                const num = parseInt(c.id.replace(/\D/g, ''), 10) || 1;
+                return (num % 2 !== 0) ? (l === 0) : (l === 1);
+              });
+
+              if (matchedItem) {
+                const sW = getWeekNumber(matchedItem.start);
+                const eW = getWeekNumber(matchedItem.end);
+                const isStart = (w === sW);
+                const isEnd = (w === eW);
+
+                let sessStr = `${matchedItem.leadSessions}s/wk`;
+                if (activeFilter !== 'All' && matchedItem.support === activeFilter) {
+                  sessStr = `${matchedItem.supportSessions}s/wk (Supp)`;
+                }
+
+                const line = document.createElement('div');
+                let cls = `v-line v-line-${prog.toLowerCase()}`;
+                if (isStart) cls += ' v-start';
+                if (isEnd) cls += ' v-end';
+                line.className = cls;
+
+                if (isStart) {
+                  line.innerHTML = `<div>${matchedItem.id}</div><div class="v-meta">${matchedItem.lead} (${sessStr})</div>`;
+                }
+
+                lane.appendChild(line);
+              }
+
+              laneContainer.appendChild(lane);
+            }
+
+            td.appendChild(laneContainer);
+          }
+
+          tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+      }
+    }
+
+    function setupViewpointToggles() {
+      const setFilter = (filter, btn) => {
+        activeFilter = filter;
+        document.querySelectorAll('.controls-card .btn').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        renderAll();
+      };
+
+      const btnAll = document.getElementById('btn-all');
+      const btnDave = document.getElementById('btn-dave');
+      const btnJamie = document.getElementById('btn-jamie');
+
+      if (btnAll) btnAll.onclick = () => setFilter('All', btnAll);
+      if (btnDave) btnDave.onclick = () => setFilter('Dave', btnDave);
+      if (btnJamie) btnJamie.onclick = () => setFilter('Jamie', btnJamie);
+    }
+
+    function renderAll() {
+      renderGantt();
+      renderCharts();
+      renderMatrix();
+    }
+
+    function init() {
+      try {
+        initHeader();
+        setupViewpointToggles();
+        renderSidebar();
+        renderAll();
+      } catch (err) {
+        console.error("Initialization error:", err);
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>
