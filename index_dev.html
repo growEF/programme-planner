@@ -559,13 +559,31 @@
       return monday;
     }
 
-    // Accurate ISO week index calculator relative to Week 1 Monday (Jan 4, 2027)
-    function getWeekNumber(dateStr) {
-      const d = parseDate(dateStr);
-      const firstMonday = new Date(2027, 0, 4);
-      const diffDays = Math.floor((d - firstMonday) / 86400000);
-      const weekNum = Math.floor(diffDays / 7) + 1;
-      return Math.max(1, Math.min(52, weekNum));
+    /* 
+      DYNAMIC DURATION & WEEK CALCULATORS 
+      Reads dates directly from cohort object variables supplied by the sidebar.
+    */
+    function getCohortMetrics(item) {
+      const yearStart = new Date(2027, 0, 1);
+      const startDate = parseDate(item.start);
+      const endDate = parseDate(item.end);
+
+      // Day offset from start of year
+      const startDays = Math.floor((startDate - yearStart) / 86400000);
+      const startW = Math.max(1, Math.min(52, Math.floor(startDays / 7) + 1));
+
+      // Calculate total active days including start and end days
+      const totalDays = Math.max(1, Math.round((endDate - startDate) / 86400000) + 1);
+      const durationWeeks = Math.round((totalDays / 7) * 10) / 10; // e.g. 28 days = 4.0 weeks
+      const endW = Math.max(startW, Math.min(52, getWeekNumberFromDate(endDate)));
+
+      return { startW, endW, durationWeeks, totalDays, startDate, endDate };
+    }
+
+    function getWeekNumberFromDate(d) {
+      const yearStart = new Date(2027, 0, 1);
+      const diffDays = Math.floor((d - yearStart) / 86400000);
+      return Math.max(1, Math.min(52, Math.floor(diffDays / 7) + 1));
     }
 
     function isPersonInvolved(item, person) {
@@ -841,13 +859,11 @@
         }
         track.appendChild(grid);
 
-        // Align block directly to 52 grid columns based on exact week numbers
-        const startW = getWeekNumber(item.start);
-        const endW = getWeekNumber(item.end);
-        const numWeeks = Math.max(1, (endW - startW + 1));
+        // Calculate dynamic start week and exact duration from sidebar values
+        const { startW, durationWeeks } = getCohortMetrics(item);
 
         const leftPercent = ((startW - 1) / 52) * 100;
-        const widthPercent = (numWeeks / 52) * 100;
+        const widthPercent = (durationWeeks / 52) * 100;
 
         const block = document.createElement('div');
         block.className = `block bg-${item.programme}`;
@@ -858,7 +874,7 @@
           ${item.id}
           <div class="gantt-tooltip">
             <strong>${item.id} (${item.programme})</strong><br>
-            📅 ${item.start} to ${item.end} (${numWeeks} Wks)<br>
+            📅 ${item.start} to ${item.end} (${durationWeeks} Wks)<br>
             👤 Lead: ${item.lead} (${item.leadSessions}s/wk)<br>
             🤝 Support: ${item.support}${item.support !== 'None' ? ` (${item.supportSessions}s/wk)` : ''}
           </div>
@@ -878,8 +894,7 @@
 
       cohorts.forEach(item => {
         if (!item) return;
-        const startW = getWeekNumber(item.start);
-        const endW = getWeekNumber(item.end);
+        const { startW, endW } = getCohortMetrics(item);
 
         let dSess = 0, jSess = 0;
         if (item.lead && item.lead.indexOf('Dave') !== -1) dSess += item.leadSessions;
@@ -943,9 +958,8 @@
         progs.forEach(prog => {
           const matching = cohorts.filter(c => {
             if (!c || c.programme !== prog || !isPersonInvolved(c, activeFilter)) return false;
-            const sW = getWeekNumber(c.start);
-            const eW = getWeekNumber(c.end);
-            return w >= sW && w <= eW;
+            const { startW, endW } = getCohortMetrics(c);
+            return w >= startW && w <= endW;
           });
 
           const td = document.createElement('td');
@@ -969,10 +983,9 @@
               });
 
               if (matchedItem) {
-                const sW = getWeekNumber(matchedItem.start);
-                const eW = getWeekNumber(matchedItem.end);
-                const isStart = (w === sW);
-                const isEnd = (w === eW);
+                const { startW, endW } = getCohortMetrics(matchedItem);
+                const isStart = (w === startW);
+                const isEnd = (w === endW);
 
                 let sessStr = `${matchedItem.leadSessions}s/wk`;
                 if (activeFilter !== 'All' && matchedItem.support === activeFilter) {
