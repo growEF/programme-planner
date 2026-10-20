@@ -209,10 +209,45 @@
       border-radius: 3px;
       z-index: 2;
       transition: all 0.2s;
+      cursor: pointer;
     }
     .bg-GT { background-color: #1a73e8; }
     .bg-GE { background-color: #1e8e3e; }
     .bg-GG { background-color: #d93025; }
+
+    /* Gantt Tooltip */
+    .block .gantt-tooltip {
+      display: none;
+      position: absolute;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #202124;
+      color: #ffffff;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: normal;
+      white-space: nowrap;
+      z-index: 20;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      line-height: 1.4;
+      text-align: left;
+      pointer-events: none;
+    }
+    .block .gantt-tooltip::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -4px;
+      border-width: 4px;
+      border-style: solid;
+      border-color: #202124 transparent transparent transparent;
+    }
+    .block:hover .gantt-tooltip {
+      display: block;
+    }
 
     /* Visual 2: Workload Bars */
     .chart-card {
@@ -693,7 +728,12 @@
       header.innerHTML = '<div style="text-align: left;">Cohort</div>';
       for (let i = 1; i <= 52; i++) {
         const div = document.createElement('div');
-        div.textContent = 'W' + i;
+        // Only show label for every 4th week (W1, W5, W9, etc.) to prevent squashing
+        if ((i - 1) % 4 === 0) {
+          div.textContent = 'W' + i;
+        } else {
+          div.textContent = '';
+        }
         header.appendChild(div);
       }
     }
@@ -814,7 +854,17 @@
         block.className = `block bg-${item.programme}`;
         block.style.left = `${leftPercent}%`;
         block.style.width = `${widthPercent}%`;
-        block.textContent = item.id;
+        
+        // Add block label & hover tooltip
+        block.innerHTML = `
+          ${item.id}
+          <div class="gantt-tooltip">
+            <strong>${item.id} (${item.programme})</strong><br>
+            📅 ${item.start} to ${item.end}<br>
+            👤 Lead: ${item.lead} (${item.leadSessions}s/wk)<br>
+            🤝 Support: ${item.support}${item.support !== 'None' ? ` (${item.supportSessions}s/wk)` : ''}
+          </div>
+        `;
 
         track.appendChild(block);
         row.appendChild(label);
