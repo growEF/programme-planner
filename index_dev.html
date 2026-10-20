@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2027 Interactive Programme Planner</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #f8f9fa;
+      color: #202124;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    /* Sidebar Layout */
+    .sidebar {
+      width: 330px;
+      background: #ffffff;
+      border-right: 1px solid #dadce0;
+      padding: 16px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    .sidebar h2 {
+      font-size: 15px;
+      margin-top: 0;
+      margin-bottom: 12px;
+      color: #1a73e8;
+    }
+
+    /* Version Manager Styles */
+    .version-card {
+      background: #e8f0fe;
+      border: 1px solid #aecbfa;
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+    .version-card h3 {
+      font-size: 13px;
+      margin: 0 0 8px 0;
+      color: #174ea6;
+    }
+    .version-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .version-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .cohort-card {
+      background: #f8f9fa;
+      border: 1px solid #dadce0;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .cohort-card h4 {
+      margin: 0 0 6px 0;
+      font-size: 12px;
+      color: #202124;
+      display: flex;
+      justify-content: space-between;
+    }
+    .form-group { margin-bottom: 6px; }
+    .form-group label {
+      display: block;
+      font-size: 10px;
+      font-weight: bold;
+      color: #5f6368;
+      margin-bottom: 2px;
+    }
+    .form-row { display: flex; gap: 6px; }
+    input[type="text"], input[type="date"], select, input[type="number"] {
+      width: 100%;
+      padding: 4px 6px;
+      font-size: 11px;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+    }
+
+    /* Main Content Layout */
+    .main-content {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    /* Viewpoint & Action Toggles */
+    .controls-card {
+      background: #ffffff;
+      border: 1px solid #dadce0;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .toggles-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .btn {
+      padding: 6px 12px;
+      border: 1px solid #dadce0;
+      border-radius: 16px;
+      background: #ffffff;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: bold;
+      color: #3c4043;
+      transition: all 0.15s ease;
+    }
+    .btn:hover { background-color: #f1f3f4; }
+    .btn.active {
+      background-color: #1a73e8;
+      color: #ffffff;
+      border-color: #1a73e8;
+    }
+    .btn-pdf {
+      background-color: #34a853;
+      color: #ffffff;
+      border-color: #34a853;
+    }
+    .btn-pdf:hover { background-color: #2d9247; }
+    .btn-danger {
+      background-color: #d93025;
+      color: #ffffff;
+      border-color: #d93025;
+    }
+    .btn-danger:hover { background-color: #a50e0e; }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #3c4043;
+      margin-top: 0;
+      margin-bottom: 12px;
+    }
+
+    /* Visual 1: Gantt Chart */
+    .gantt-card {
+      background: #ffffff;
+      border: 1px solid #dadce0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+    }
+    .weeks-header {
+      display: grid;
+      grid-template-columns: 80px repeat(52, 1fr);
+      border-bottom: 2px solid #e8eaed;
+      padding-bottom: 6px;
+      font-size: 10px;
+      font-weight: bold;
+      text-align: center;
+      color: #5f6368;
+      min-width: 800px;
+    }
+    .programme-row {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid #f1f3f4;
+      min-width: 800px;
+    }
+    .row-label {
+      font-weight: bold;
+      font-size: 12px;
+      color: #3c4043;
+    }
+    .track-container {
+      position: relative;
+      height: 26px;
+      background-color: #f1f3f4;
+      border-radius: 4px;
+    }
+    .week-grid-lines {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: grid;
+      grid-template-columns: repeat(52, 1fr);
+      pointer-events: none;
+    }
+    .week-grid-lines div { border-right: 1px dashed #e8eaed; }
+    .block {
+      position: absolute;
+      height: 18px;
+      top: 4px;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: bold;
+      border-radius: 3px;
+      z-index: 2;
+      transition: all 0.2s;
+    }
+    .bg-GT { background-color: #1a73e8; }
+    .bg-GE { background-color: #1e8e3e; }
+    .bg-GG { background-color: #d93025; }
+
+    /* Visual 2: Workload Bars */
+    .chart-card {
+      background: #ffffff;
+      border: 1px solid #dadce0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+    .chart-title {
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 10px;
+      color: white;
+      font-weight: bold;
+    }
+    .badge-dave { background-color: #1a73e8; }
+    .badge-jamie { background-color: #1e8e3e; }
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(52, 1fr);
+      gap: 2px;
+      align-items: flex-end;
+      height: 80px;
+      border-bottom: 2px solid #dadce0;
+      padding-bottom: 4px;
+      min-width: 800px;
+    }
+    .bar-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      height: 100%;
+      position: relative;
+    }
+    .bar { width: 100%; border-radius: 2px 2px 0 0; }
+    .bar-col .tooltip {
+      display: none;
+      position: absolute;
+      bottom: 105%;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #202124;
+      color: #ffffff;
+      padding: 4px 6px;
+      border-radius: 4px;
+      font-size: 9px;
+      white-space: nowrap;
+      z-index: 10;
+    }
+    .bar-col:hover .tooltip { display: block; }
+    .load-0 { height: 2px; background-color: #e8eaed; }
+    .load-1 { height: 20%; background-color: #8ab4f8; }
+    .load-2 { height: 40%; background-color: #4285f4; }
+    .load-3 { height: 60%; background-color: #fbbc04; }
+    .load-4 { height: 80%; background-color: #ea4335; }
+    .load-5 { height: 100%; background-color: #b31412; }
+
+    /* Visual 3: Continuous Vertical Matrix Table */
+    .matrix-card {
+      background: #ffffff;
+      border: 1px solid #dadce0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      table-layout: fixed;
+    }
+    .matrix-table th {
+      background: #f1f3f4;
+      color: #3c4043;
+      padding: 8px;
+      border: 1px solid #dadce0;
+      font-weight: bold;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+    .matrix-table td {
+      border: 1px solid #e8eaed;
+      padding: 0;
+      vertical-align: top;
+      height: 28px;
+    }
+
+    .col-week { width: 140px; }
+    .col-gt   { width: 35%; }
+    .col-ge   { width: 20%; }
+    .col-gg   { width: 35%; }
+    .week-label-cell {
+      width: 140px;
+      font-weight: bold;
+      color: #1a73e8;
+      background: #fafafa;
+      padding: 6px !important;
+    }
+    .empty-cell {
+      color: #bdc1c6;
+      font-style: italic;
+      font-size: 10px;
+      text-align: center;
+      line-height: 28px;
+    }
+    .lane-container {
+      display: flex;
+      width: 100%;
+      height: 100%;
+    }
+    .lane {
+      flex: 1;
+      height: 100%;
+      padding: 0 2px;
+    }
+    .v-line {
+      width: 100%;
+      height: 100%;
+      color: #ffffff;
+      font-weight: bold;
+      font-size: 10px;
+      padding: 2px 4px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .v-line-gt { background-color: #1a73e8; }
+    .v-line-ge { background-color: #1e8e3e; }
+    .v-line-gg { background-color: #d93025; }
+    .v-start {
+      border-top-left-radius: 5px;
+      border-top-right-radius: 5px;
+    }
+    .v-end {
+      border-bottom-left-radius: 5px;
+      border-bottom-right-radius: 5px;
+    }
+    .v-meta {
+      font-size: 9px;
+      font-weight: normal;
+      opacity: 0.95;
+    }
+
+    @media print {
+      body {
+        height: auto;
+        overflow: visible;
+        background: #ffffff;
+      }
+      .sidebar, .controls-card {
+        display: none !important;
+      }
+      .main-content {
+        padding: 0;
+        overflow: visible;
+      }
+      .matrix-card > div {
+        max-height: none !important;
+        overflow: visible !important;
+      }
+      .gantt-card, .chart-card, .matrix-card {
+        border: none;
+        padding: 0;
+        margin-bottom: 20px;
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR CONTROLS -->
+  <div class="sidebar">
+    <h2>Cohort Settings & Roles</h2>
+
+    <!-- VERSION MANAGER -->
+    <div class="version-card">
+      <h3>📁 Saved Versions</h3>
+      <div class="version-actions">
+        <div class="form-group">
+          <label>Load Saved Version</label>
+          <select id="version-select">
+            <option value="default">Default 2027 Schedule</option>
+          </select>
+        </div>
+        <div class="version-row">
+          <button class="btn btn-danger" id="btn-delete-version" style="font-size:10px; padding: 4px 8px;">Delete</button>
+        </div>
+        <hr style="border:0; border-top:1px solid #aecbfa; margin: 4px 0;">
+        <div class="form-group">
+          <label>Save Current Settings As:</label>
+          <div class="version-row">
+            <input type="text" id="version-name-input" placeholder="e.g. 2027 Plan v2">
+            <button class="btn btn-pdf" id="btn-save-version" style="font-size:10px; white-space:nowrap;">Save</button>
+          </div>
+        </div>
+        <div class="version-row" style="margin-top: 4px;">
+          <button class="btn" id="btn-export-json" style="font-size:10px; width:50%;">📥 Export File</button>
+          <button class="btn" id="btn-import-trigger" style="font-size:10px; width:50%;">📤 Import File</button>
+          <input type="file" id="file-import" accept=".json" style="display:none;">
+        </div>
+      </div>
+    </div>
+
+    <div id="sidebar-controls"></div>
+  </div>
+
+  <!-- MAIN CONTENT AREA -->
+  <div class="main-content">
+    <!-- MASTER TOGGLES & ACTIONS -->
+    <div class="controls-card">
+      <div class="toggles-group">
+        <span style="font-size: 12px; font-weight: bold;">Viewpoint:</span>
+        <button class="btn active" id="btn-all">All Programmes</button>
+        <button class="btn" id="btn-dave">Dave's View</button>
+        <button class="btn" id="btn-jamie">Jamie's View</button>
+      </div>
+      <button class="btn btn-pdf" id="btn-pdf">📄 Download PDF</button>
+    </div>
+
+    <!-- VISUAL 1: GANTT CHART -->
+    <div class="gantt-card">
+      <div class="section-title">1. Master Gantt Timeline (52 Weeks)</div>
+      <div class="weeks-header" id="weeks-header">
+        <div style="text-align: left;">Cohort</div>
+      </div>
+      <div id="gantt-rows"></div>
+    </div>
+
+    <!-- VISUAL 2: WORKLOAD CHARTS -->
+    <div class="chart-card">
+      <div class="section-title">2. Leader Weekly Session Workload</div>
+      <div class="chart-title">Dave <span class="badge badge-dave">Weekly Sessions</span></div>
+      <div class="chart-grid" id="dave-chart"></div>
+      
+      <div class="chart-title" style="margin-top: 16px;">Jamie <span class="badge badge-jamie">Weekly Sessions</span></div>
+      <div class="chart-grid" id="jamie-chart"></div>
+    </div>
+
+    <!-- VISUAL 3: CONTINUOUS VERTICAL MATRIX WITH FIXED SPLIT LANES -->
+    <div class="matrix-card">
+      <div class="section-title">3. 52-Week Vertical Programme Flow (Split Lanes & Seamless Lines)</div>
+      <div style="max-height: 650px; overflow-y: auto; border: 1px solid #dadce0; border-radius: 6px;">
+        <table class="matrix-table">
+          <colgroup>
+            <col class="col-week">
+            <col class="col-gt">
+            <col class="col-ge">
+            <col class="col-gg">
+          </colgroup>
+          <thead>
+            <tr>
+              <th style="text-align: left;">Week</th>
+              <th>GT Cohorts (Lane 1 & 2)</th>
+              <th>GE Extended Pathway</th>
+              <th>GG Cohorts (Lane 1 & 2)</th>
+            </tr>
+          </thead>
+          <tbody id="matrix-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let activeFilter = 'All';
+
+    const defaultCohorts = [
+      { id: 'GT1', programme: 'GT', start: '2027-02-15', end: '2027-03-12', lead: 'Dave', leadSessions: 3, support: 'Jamie', supportSessions: 0 },
+      { id: 'GT2', programme: 'GT', start: '2027-03-01', end: '2027-03-26', lead: 'Jamie', leadSessions: 3, support: 'Dave', supportSessions: 0 },
+      { id: 'GT3', programme: 'GT', start: '2027-04-19', end: '2027-05-14', lead: 'Dave', leadSessions: 3, support: 'Jamie', supportSessions: 0 },
+      { id: 'GT4', programme: 'GT', start: '2027-05-24', end: '2027-06-18', lead: 'Jamie', leadSessions: 3, support: 'Dave', supportSessions: 0 },
+      { id: 'GT5', programme: 'GT', start: '2027-07-19', end: '2027-08-13', lead: 'Dave', leadSessions: 3, support: 'Jamie', supportSessions: 0 },
+      { id: 'GT6', programme: 'GT', start: '2027-08-23', end: '2027-09-17', lead: 'Jamie', leadSessions: 3, support: 'Dave', supportSessions: 0 },
+      { id: 'GE1', programme: 'GE', start: '2027-04-05', end: '2027-06-11', lead: 'Dave and Jamie', leadSessions: 1, support: 'None', supportSessions: 0 },
+      { id: 'GE2', programme: 'GE', start: '2027-06-28', end: '2027-09-03', lead: 'Dave and Jamie', leadSessions: 1, support: 'None', supportSessions: 0 },
+      { id: 'GE3', programme: 'GE', start: '2027-09-20', end: '2027-11-26', lead: 'Dave and Jamie', leadSessions: 1, support: 'None', supportSessions: 0 },
+      { id: 'GG1', programme: 'GG', start: '2027-10-04', end: '2027-10-29', lead: 'Dave', leadSessions: 2, support: 'Jamie', supportSessions: 0 },
+      { id: 'GG2', programme: 'GG', start: '2027-11-01', end: '2027-11-26', lead: 'Jamie', leadSessions: 2, support: 'Dave', supportSessions: 0 },
+      { id: 'GG3', programme: 'GG', start: '2027-11-29', end: '2027-12-24', lead: 'Dave and Jamie', leadSessions: 2, support: 'None', supportSessions: 0 }
+    ];
+
+    let cohorts = JSON.parse(JSON.stringify(defaultCohorts));
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    function parseDate(str) {
+      if (!str) return new Date(2027, 0, 1);
+      const parts = str.split('-');
+      return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    }
+
+    function getMondayOfWeek(w) {
+      const firstMonday = new Date(2027, 0, 4);
+      const monday = new Date(firstMonday);
+      monday.setDate(firstMonday.getDate() + (w - 1) * 7);
+      return monday;
+    }
+
+    function getWeekNumber(dateStr) {
+      const d = parseDate(dateStr);
+      const start = new Date(2027, 0, 1);
+      const diffDays = Math.floor((d - start) / 86400000);
+      return Math.max(1, Math.min(52, Math.floor(diffDays / 7) + 1));
+    }
+
+    function isPersonInvolved(item, person) {
+      if (!item) return false;
+      if (person === 'All') return true;
+      const isLead = item.lead && item.lead.indexOf(person) !== -1;
+      const isSupport = item.support === person && item.supportSessions > 0;
+      return isLead || isSupport;
+    }
+
+    /* VERSION STORAGE & MANAGEMENT FUNCTIONS */
+    function getSavedVersions() {
+      try {
+        return JSON.parse(localStorage.getItem('programme_planner_versions') || '{}');
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveVersionsToStorage(versions) {
+      localStorage.setItem('programme_planner_versions', JSON.stringify(versions));
+    }
+
+    function updateVersionDropdown() {
+      const select = document.getElementById('version-select');
+      if (!select) return;
+
+      const currentSelection = select.value;
+      select.innerHTML = '<option value="default">Default 2027 Schedule</option>';
+      
+      const versions = getSavedVersions();
+      Object.keys(versions).forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        select.appendChild(opt);
+      });
+
+      if (versions[currentSelection] || currentSelection === 'default') {
+        select.value = currentSelection;
+      }
+    }
+
+    function saveCurrentWorkingState() {
+      localStorage.setItem('programme_planner_active', JSON.stringify(cohorts));
+    }
+
+    function loadActiveOrLastVersion() {
+      const activeState = localStorage.getItem('programme_planner_active');
+      if (activeState) {
+        try {
+          cohorts = JSON.parse(activeState);
+        } catch(e) {
+          cohorts = JSON.parse(JSON.stringify(defaultCohorts));
+        }
+      }
+    }
+
+    function setupVersionHandlers() {
+      const select = document.getElementById('version-select');
+      const saveBtn = document.getElementById('btn-save-version');
+      const deleteBtn = document.getElementById('btn-delete-version');
+      const nameInput = document.getElementById('version-name-input');
+      const exportBtn = document.getElementById('btn-export-json');
+      const importTrigger = document.getElementById('btn-import-trigger');
+      const fileInput = document.getElementById('file-import');
+
+      updateVersionDropdown();
+
+      select.addEventListener('change', (e) => {
+        const selected = e.target.value;
+        if (selected === 'default') {
+          cohorts = JSON.parse(JSON.stringify(defaultCohorts));
+        } else {
+          const versions = getSavedVersions();
+          if (versions[selected]) {
+            cohorts = JSON.parse(JSON.stringify(versions[selected]));
+          }
+        }
+        saveCurrentWorkingState();
+        renderSidebar();
+        renderAll();
+      });
+
+      saveBtn.addEventListener('click', () => {
+        const name = nameInput.value.trim();
+        if (!name) {
+          alert('Please enter a version name.');
+          return;
+        }
+        if (name === 'default') {
+          alert('Cannot overwrite the default template name.');
+          return;
+        }
+        const versions = getSavedVersions();
+        versions[name] = cohorts;
+        saveVersionsToStorage(versions);
+        updateVersionDropdown();
+        select.value = name;
+        nameInput.value = '';
+        alert(`Saved version "${name}" successfully!`);
+      });
+
+      deleteBtn.addEventListener('click', () => {
+        const selected = select.value;
+        if (selected === 'default') {
+          alert('Cannot delete the default template.');
+          return;
+        }
+        if (confirm(`Are you sure you want to delete "${selected}"?`)) {
+          const versions = getSavedVersions();
+          delete versions[selected];
+          saveVersionsToStorage(versions);
+          select.value = 'default';
+          cohorts = JSON.parse(JSON.stringify(defaultCohorts));
+          saveCurrentWorkingState();
+          updateVersionDropdown();
+          renderSidebar();
+          renderAll();
+        }
+      });
+
+      exportBtn.addEventListener('click', () => {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cohorts, null, 2));
+        const dlAnchor = document.createElement('a');
+        dlAnchor.setAttribute("href", dataStr);
+        dlAnchor.setAttribute("download", `programme_schedule_${new Date().toISOString().slice(0,10)}.json`);
+        document.body.appendChild(dlAnchor);
+        dlAnchor.click();
+        dlAnchor.remove();
+      });
+
+      importTrigger.addEventListener('click', () => fileInput.click());
+
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const imported = JSON.parse(event.target.result);
+            if (Array.isArray(imported)) {
+              cohorts = imported;
+              saveCurrentWorkingState();
+              renderSidebar();
+              renderAll();
+              alert('Schedule imported successfully!');
+            } else {
+              alert('Invalid file format. Must be a valid schedule JSON array.');
+            }
+          } catch(err) {
+            alert('Error reading JSON file.');
+          }
+        };
+        reader.readAsText(file);
+      });
+    }
+
+    function initHeader() {
+      const header = document.getElementById('weeks-header');
+      if (!header) return;
+      header.innerHTML = '<div style="text-align: left;">Cohort</div>';
+      for (let i = 1; i <= 52; i++) {
+        const div = document.createElement('div');
+        div.textContent = 'W' + i;
+        header.appendChild(div);
+      }
+    }
+
+    function renderSidebar() {
+      const container = document.getElementById('sidebar-controls');
+      if (!container) return;
+      container.innerHTML = '';
+
+      cohorts.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'cohort-card';
+
+        const title = document.createElement('h4');
+        title.textContent = `${item.id} (${item.programme})`;
+        card.appendChild(title);
+
+        const row1 = document.createElement('div');
+        row1.className = 'form-group';
+        row1.innerHTML = `
+          <div class="form-row">
+            <div><label>Start</label><input type="date" value="${item.start}" data-index="${index}" data-key="start"></div>
+            <div><label>End</label><input type="date" value="${item.end}" data-index="${index}" data-key="end"></div>
+          </div>
+        `;
+        card.appendChild(row1);
+
+        const row2 = document.createElement('div');
+        row2.className = 'form-group';
+        row2.innerHTML = `
+          <div class="form-row">
+            <div>
+              <label>Lead</label>
+              <select data-index="${index}" data-key="lead">
+                <option value="Dave" ${item.lead === 'Dave' ? 'selected' : ''}>Dave</option>
+                <option value="Jamie" ${item.lead === 'Jamie' ? 'selected' : ''}>Jamie</option>
+                <option value="Dave and Jamie" ${item.lead === 'Dave and Jamie' ? 'selected' : ''}>Dave & Jamie</option>
+              </select>
+            </div>
+            <div><label>Lead Sess/Wk</label><input type="number" min="0" max="5" value="${item.leadSessions}" data-index="${index}" data-key="leadSessions"></div>
+          </div>
+        `;
+        card.appendChild(row2);
+
+        const row3 = document.createElement('div');
+        row3.className = 'form-group';
+        row3.innerHTML = `
+          <div class="form-row">
+            <div>
+              <label>Support</label>
+              <select data-index="${index}" data-key="support">
+                <option value="None" ${item.support === 'None' ? 'selected' : ''}>None</option>
+                <option value="Dave" ${item.support === 'Dave' ? 'selected' : ''}>Dave</option>
+                <option value="Jamie" ${item.support === 'Jamie' ? 'selected' : ''}>Jamie</option>
+              </select>
+            </div>
+            <div><label>Supp Sess/Wk</label><input type="number" min="0" max="5" value="${item.supportSessions}" data-index="${index}" data-key="supportSessions"></div>
+          </div>
+        `;
+        card.appendChild(row3);
+
+        container.appendChild(card);
+      });
+
+      container.querySelectorAll('input, select').forEach(el => {
+        el.addEventListener('change', (e) => {
+          const idx = parseInt(e.target.getAttribute('data-index'), 10);
+          const key = e.target.getAttribute('data-key');
+          if (cohorts[idx]) {
+            let val = e.target.value;
+            if (key === 'leadSessions' || key === 'supportSessions') {
+              val = parseInt(val, 10) || 0;
+            }
+            cohorts[idx][key] = val;
+            saveCurrentWorkingState();
+            renderAll();
+          }
+        });
+      });
+    }
+
+    function renderGantt() {
+      const container = document.getElementById('gantt-rows');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const yearStart = new Date(2027, 0, 1).getTime();
+      const yearEnd = new Date(2027, 11, 31).getTime();
+      const totalYearMs = yearEnd - yearStart;
+
+      cohorts.forEach(item => {
+        if (!isPersonInvolved(item, activeFilter)) return;
+
+        const row = document.createElement('div');
+        row.className = 'programme-row';
+
+        const label = document.createElement('div');
+        label.className = 'row-label';
+        label.textContent = item.id;
+
+        const track = document.createElement('div');
+        track.className = 'track-container';
+
+        const grid = document.createElement('div');
+        grid.className = 'week-grid-lines';
+        for (let i = 0; i < 52; i++) {
+          grid.appendChild(document.createElement('div'));
+        }
+        track.appendChild(grid);
+
+        const startMs = parseDate(item.start).getTime();
+        const endMs = parseDate(item.end).getTime() + 86400000;
+
+        const leftPercent = Math.max(0, ((startMs - yearStart) / totalYearMs) * 100);
+        const widthPercent = Math.min(100 - leftPercent, ((endMs - startMs) / totalYearMs) * 100);
+
+        const block = document.createElement('div');
+        block.className = `block bg-${item.programme}`;
+        block.style.left = `${leftPercent}%`;
+        block.style.width = `${widthPercent}%`;
+        block.textContent = item.id;
+
+        track.appendChild(block);
+        row.appendChild(label);
+        row.appendChild(track);
+
+        container.appendChild(row);
+      });
+    }
+
+    function renderCharts() {
+      const daveData = new Array(53).fill(0);
+      const jamieData = new Array(53).fill(0);
+
+      cohorts.forEach(item => {
+        if (!item) return;
+        const startW = getWeekNumber(item.start);
+        const endW = getWeekNumber(item.end);
+
+        let dSess = 0, jSess = 0;
+        if (item.lead && item.lead.indexOf('Dave') !== -1) dSess += item.leadSessions;
+        if (item.support === 'Dave') dSess += item.supportSessions;
+
+        if (item.lead && item.lead.indexOf('Jamie') !== -1) jSess += item.leadSessions;
+        if (item.support === 'Jamie') jSess += item.supportSessions;
+
+        for (let w = startW; w <= endW && w <= 52; w++) {
+          daveData[w] += dSess;
+          jamieData[w] += jSess;
+        }
+      });
+
+      const daveContainer = document.getElementById('dave-chart');
+      const jamieContainer = document.getElementById('jamie-chart');
+      if (!daveContainer || !jamieContainer) return;
+
+      daveContainer.innerHTML = '';
+      jamieContainer.innerHTML = '';
+
+      for (let w = 1; w <= 52; w++) {
+        const monday = getMondayOfWeek(w);
+        const dateLabel = `${monday.getDate().toString().padStart(2, '0')} ${months[monday.getMonth()]}`;
+
+        const dVal = daveData[w];
+        const dClass = dVal >= 5 ? 'load-5' : `load-${dVal}`;
+        const dCol = document.createElement('div');
+        dCol.className = 'bar-col';
+        dCol.innerHTML = `<div class="bar ${dClass}"></div><div class="tooltip">W${w} (${dateLabel}): ${dVal} Sessions</div>`;
+        daveContainer.appendChild(dCol);
+
+        const jVal = jamieData[w];
+        const jClass = jVal >= 5 ? 'load-5' : `load-${jVal}`;
+        const jCol = document.createElement('div');
+        jCol.className = 'bar-col';
+        jCol.innerHTML = `<div class="bar ${jClass}"></div><div class="tooltip">W${w} (${dateLabel}): ${jVal} Sessions</div>`;
+        jamieContainer.appendChild(jCol);
+      }
+    }
+
+    function renderMatrix() {
+      const tbody = document.getElementById('matrix-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const progs = ['GT', 'GE', 'GG'];
+
+      for (let w = 1; w <= 52; w++) {
+        const monday = getMondayOfWeek(w);
+        const monthStr = months[monday.getMonth()];
+        const dateStr = monday.getDate().toString().padStart(2, '0');
+
+        const tr = document.createElement('tr');
+
+        const tdWeek = document.createElement('td');
+        tdWeek.className = 'week-label-cell';
+        tdWeek.innerHTML = `Week ${w} <span style="font-size:9px; color:#5f6368; font-weight:normal;">(${dateStr} ${monthStr})</span>`;
+        tr.appendChild(tdWeek);
+
+        progs.forEach(prog => {
+          const matching = cohorts.filter(c => {
+            if (!c || c.programme !== prog || !isPersonInvolved(c, activeFilter)) return false;
+            const sW = getWeekNumber(c.start);
+            const eW = getWeekNumber(c.end);
+            return w >= sW && w <= eW;
+          });
+
+          const td = document.createElement('td');
+
+          if (matching.length === 0) {
+            td.innerHTML = '<div class="empty-cell">&mdash;</div>';
+          } else {
+            const laneContainer = document.createElement('div');
+            laneContainer.className = 'lane-container';
+
+            const maxLanes = (prog === 'GT' || prog === 'GG') ? 2 : 1;
+
+            for (let l = 0; l < maxLanes; l++) {
+              const lane = document.createElement('div');
+              lane.className = 'lane';
+
+              const matchedItem = matching.find(c => {
+                if (maxLanes === 1) return true;
+                const num = parseInt(c.id.replace(/\D/g, ''), 10) || 1;
+                return (num % 2 !== 0) ? (l === 0) : (l === 1);
+              });
+
+              if (matchedItem) {
+                const sW = getWeekNumber(matchedItem.start);
+                const eW = getWeekNumber(matchedItem.end);
+                const isStart = (w === sW);
+                const isEnd = (w === eW);
+
+                let sessStr = `${matchedItem.leadSessions}s/wk`;
+                if (activeFilter !== 'All' && matchedItem.support === activeFilter) {
+                  sessStr = `${matchedItem.supportSessions}s/wk (Supp)`;
+                }
+
+                const line = document.createElement('div');
+                let cls = `v-line v-line-${prog.toLowerCase()}`;
+                if (isStart) cls += ' v-start';
+                if (isEnd) cls += ' v-end';
+                line.className = cls;
+
+                if (isStart) {
+                  line.innerHTML = `<div>${matchedItem.id}</div><div class="v-meta">${matchedItem.lead} (${sessStr})</div>`;
+                }
+
+                lane.appendChild(line);
+              }
+              laneContainer.appendChild(lane);
+            }
+            td.appendChild(laneContainer);
+          }
+          tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+      }
+    }
+
+    function setupControls() {
+      const setFilter = (filter, btn) => {
+        activeFilter = filter;
+        document.querySelectorAll('.controls-card .btn').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        renderAll();
+      };
+
+      const btnAll = document.getElementById('btn-all');
+      const btnDave = document.getElementById('btn-dave');
+      const btnJamie = document.getElementById('btn-jamie');
+      const btnPdf = document.getElementById('btn-pdf');
+
+      if (btnAll) btnAll.onclick = () => setFilter('All', btnAll);
+      if (btnDave) btnDave.onclick = () => setFilter('Dave', btnDave);
+      if (btnJamie) btnJamie.onclick = () => setFilter('Jamie', btnJamie);
+
+      if (btnPdf) {
+        btnPdf.onclick = () => { window.print(); };
+      }
+    }
+
+    function renderAll() {
+      renderGantt();
+      renderCharts();
+      renderMatrix();
+    }
+
+    function init() {
+      try {
+        loadActiveOrLastVersion();
+        initHeader();
+        setupControls();
+        setupVersionHandlers();
+        renderSidebar();
+        renderAll();
+      } catch (err) {
+        console.error("Initialization error:", err);
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>
