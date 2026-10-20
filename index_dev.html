@@ -559,11 +559,13 @@
       return monday;
     }
 
+    // Accurate ISO week index calculator relative to Week 1 Monday (Jan 4, 2027)
     function getWeekNumber(dateStr) {
       const d = parseDate(dateStr);
-      const start = new Date(2027, 0, 1);
-      const diffDays = Math.floor((d - start) / 86400000);
-      return Math.max(1, Math.min(52, Math.floor(diffDays / 7) + 1));
+      const firstMonday = new Date(2027, 0, 4);
+      const diffDays = Math.floor((d - firstMonday) / 86400000);
+      const weekNum = Math.floor(diffDays / 7) + 1;
+      return Math.max(1, Math.min(52, weekNum));
     }
 
     function isPersonInvolved(item, person) {
@@ -728,7 +730,6 @@
       header.innerHTML = '<div style="text-align: left;">Cohort</div>';
       for (let i = 1; i <= 52; i++) {
         const div = document.createElement('div');
-        // Only show label for every 4th week (W1, W5, W9, etc.) to prevent squashing
         if ((i - 1) % 4 === 0) {
           div.textContent = 'W' + i;
         } else {
@@ -820,10 +821,6 @@
       if (!container) return;
       container.innerHTML = '';
 
-      const yearStart = new Date(2027, 0, 1).getTime();
-      const yearEnd = new Date(2027, 11, 31).getTime();
-      const totalYearMs = yearEnd - yearStart;
-
       cohorts.forEach(item => {
         if (!isPersonInvolved(item, activeFilter)) return;
 
@@ -844,23 +841,24 @@
         }
         track.appendChild(grid);
 
-        const startMs = parseDate(item.start).getTime();
-        const endMs = parseDate(item.end).getTime() + 86400000;
+        // Align block directly to 52 grid columns based on exact week numbers
+        const startW = getWeekNumber(item.start);
+        const endW = getWeekNumber(item.end);
+        const numWeeks = Math.max(1, (endW - startW + 1));
 
-        const leftPercent = Math.max(0, ((startMs - yearStart) / totalYearMs) * 100);
-        const widthPercent = Math.min(100 - leftPercent, ((endMs - startMs) / totalYearMs) * 100);
+        const leftPercent = ((startW - 1) / 52) * 100;
+        const widthPercent = (numWeeks / 52) * 100;
 
         const block = document.createElement('div');
         block.className = `block bg-${item.programme}`;
         block.style.left = `${leftPercent}%`;
         block.style.width = `${widthPercent}%`;
         
-        // Add block label & hover tooltip
         block.innerHTML = `
           ${item.id}
           <div class="gantt-tooltip">
             <strong>${item.id} (${item.programme})</strong><br>
-            📅 ${item.start} to ${item.end}<br>
+            📅 ${item.start} to ${item.end} (${numWeeks} Wks)<br>
             👤 Lead: ${item.lead} (${item.leadSessions}s/wk)<br>
             🤝 Support: ${item.support}${item.support !== 'None' ? ` (${item.supportSessions}s/wk)` : ''}
           </div>
