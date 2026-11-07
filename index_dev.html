@@ -442,16 +442,20 @@
     <div class="spreadsheet-card">
       <div class="section-title">
         <span>Master Cohort Spreadsheet Editor (Live Synchronized Data Grid)</span>
-        <span style="font-size:10px; font-weight:normal; color:#5f6368;">Edit IDs and Dates below. Customize weekly leads/support in Section 3</span>
+        <span style="font-size:10px; font-weight:normal; color:#5f6368;">Edit dates or comma-separated weekly arrays (e.g. 3,3,3,3) below</span>
       </div>
       <div class="table-container">
         <table class="data-table">
           <thead>
             <tr>
-              <th style="width:80px;">ID</th>
-              <th style="width:80px;">Prog</th>
-              <th style="width:150px;">Start Date</th>
-              <th style="width:150px;">End Date</th>
+              <th style="width:70px;">ID</th>
+              <th style="width:70px;">Prog</th>
+              <th style="width:120px;">Start Date</th>
+              <th style="width:120px;">End Date</th>
+              <th style="width:130px;">Jamie Lead</th>
+              <th style="width:130px;">Dave Lead</th>
+              <th style="width:130px;">Jamie Support</th>
+              <th style="width:130px;">Dave Support</th>
             </tr>
           </thead>
           <tbody id="spreadsheet-body"></tbody>
@@ -574,7 +578,6 @@
       const endW = getWeekNumberFromDate(endDate);
       const durationWeeks = Math.max(1, (endW - startW) + 1);
 
-      // Ensure 4 arrays exist and match exact duration weeks
       ['jamieLead', 'daveLead', 'jamieSupport', 'daveSupport'].forEach(key => {
         if (!Array.isArray(item[key]) || item[key].length !== durationWeeks) {
           const defaultVal = Array.isArray(item[key]) ? item[key][0] || 0 : 0;
@@ -744,6 +747,10 @@
           <td><span style="padding:2px 6px; background:#e8f0fe; color:#174ea6; border-radius:4px; font-weight:bold;">${item.programme}</span></td>
           <td><input type="date" value="${item.start}" data-index="${index}" data-key="start"></td>
           <td><input type="date" value="${item.end}" data-index="${index}" data-key="end"></td>
+          <td><input type="text" value="${item.jamieLead.join(',')}" data-index="${index}" data-key="jamieLead" title="Comma-separated array"></td>
+          <td><input type="text" value="${item.daveLead.join(',')}" data-index="${index}" data-key="daveLead" title="Comma-separated array"></td>
+          <td><input type="text" value="${item.jamieSupport.join(',')}" data-index="${index}" data-key="jamieSupport" title="Comma-separated array"></td>
+          <td><input type="text" value="${item.daveSupport.join(',')}" data-index="${index}" data-key="daveSupport" title="Comma-separated array"></td>
         `;
         tbody.appendChild(tr);
       });
@@ -753,7 +760,11 @@
           const idx = parseInt(e.target.getAttribute('data-index'), 10);
           const key = e.target.getAttribute('data-key');
           if (cohorts[idx]) {
-            cohorts[idx][key] = e.target.value;
+            if (['jamieLead', 'daveLead', 'jamieSupport', 'daveSupport'].includes(key)) {
+              cohorts[idx][key] = e.target.value.split(',').map(n => parseInt(n.trim(), 10) || 0);
+            } else {
+              cohorts[idx][key] = e.target.value;
+            }
             saveCurrentWorkingState();
             renderSpreadsheet();
             renderAll();
@@ -933,13 +944,11 @@
                 const isStart = (w === startW);
                 const isEnd = (w === getCohortMetrics(matchedItem).endW);
 
-                // Determine active lead person & sessions for this week
                 let leadPerson = 'None';
                 let leadSess = 0;
                 if ((matchedItem.jamieLead[weekIndex] || 0) > 0) { leadPerson = 'Jamie'; leadSess = matchedItem.jamieLead[weekIndex]; }
                 else if ((matchedItem.daveLead[weekIndex] || 0) > 0) { leadPerson = 'Dave'; leadSess = matchedItem.daveLead[weekIndex]; }
 
-                // Determine active support person & sessions for this week
                 let suppPerson = 'None';
                 let suppSess = 0;
                 if ((matchedItem.jamieSupport[weekIndex] || 0) > 0) { suppPerson = 'Jamie'; suppSess = matchedItem.jamieSupport[weekIndex]; }
@@ -961,7 +970,7 @@
                         <option value="Dave" ${leadPerson === 'Dave' ? 'selected' : ''}>Dave</option>
                         <option value="Jamie" ${leadPerson === 'Jamie' ? 'selected' : ''}>Jamie</option>
                       </select>
-                      <input type="number" min="0" max="5" value="${leadSess}" data-index="${cohortIndex}" data-week="${weekIndex}" data-type="leadSess" title="Lead sessions">
+                      <input type="number" min="0" max="5" value="${leadSess}" data-index="${cohortIndex}" data-week="${weekIndex}" data-type="leadSess">
                     </div>
                     <div class="v-meta-row">
                       <span>S:</span>
@@ -970,7 +979,7 @@
                         <option value="Dave" ${suppPerson === 'Dave' ? 'selected' : ''}>Dave</option>
                         <option value="Jamie" ${suppPerson === 'Jamie' ? 'selected' : ''}>Jamie</option>
                       </select>
-                      <input type="number" min="0" max="5" value="${suppSess}" data-index="${cohortIndex}" data-week="${weekIndex}" data-type="suppSess" title="Support sessions">
+                      <input type="number" min="0" max="5" value="${suppSess}" data-index="${cohortIndex}" data-week="${weekIndex}" data-type="suppSess">
                     </div>
                   </div>
                 `;
@@ -985,7 +994,6 @@
         tbody.appendChild(tr);
       }
 
-      // Matrix weekly inputs & dropdowns event binding
       tbody.querySelectorAll('.v-meta select, .v-meta input').forEach(el => {
         el.addEventListener('change', (e) => {
           const idx = parseInt(e.target.getAttribute('data-index'), 10);
@@ -996,31 +1004,32 @@
 
           if (type === 'leadPerson') {
             const newPerson = e.target.value;
-            const currentVal = (item.jamistLead?.[weekIdx] || item.daveLead?.[weekIdx] || 2);
-            item.jamieLead[weekIdx] = (newPerson === 'Jamie') ? (currentVal || 1) : 0;
-            item.daveLead[weekIdx] = (newPerson === 'Dave') ? (currentVal || 1) : 0;
+            const curVal = Math.max(item.jamieLead[weekIdx] || 0, item.daveLead[weekIdx] || 0, 2);
+            item.jamieLead[weekIdx] = (newPerson === 'Jamie') ? curVal : 0;
+            item.daveLead[weekIdx] = (newPerson === 'Dave') ? curVal : 0;
           } else if (type === 'leadSess') {
             const val = parseInt(e.target.value, 10) || 0;
-            if (item.jamieLead[weekIdx] > 0) item.jamieLead[weekIdx] = val;
-            if (item.daveLead[weekIdx] > 0) item.daveLead[weekIdx] = val;
-            if (item.jamieLead[weekIdx] === 0 && item.daveLead[weekIdx] === 0 && val > 0) {
-              item.daveLead[weekIdx] = val; // default fallback
+            if ((item.jamieLead[weekIdx] || 0) > 0) item.jamieLead[weekIdx] = val;
+            if ((item.daveLead[weekIdx] || 0) > 0) item.daveLead[weekIdx] = val;
+            if ((item.jamieLead[weekIdx] || 0) === 0 && (item.daveLead[weekIdx] || 0) === 0 && val > 0) {
+              item.daveLead[weekIdx] = val;
             }
           } else if (type === 'suppPerson') {
             const newPerson = e.target.value;
-            const currentVal = (item.jamieSupport?.[weekIdx] || item.daveSupport?.[weekIdx] || 1);
-            item.jamieSupport[weekIdx] = (newPerson === 'Jamie') ? (currentVal || 1) : 0;
-            item.daveSupport[weekIdx] = (newPerson === 'Dave') ? (currentVal || 1) : 0;
+            const curVal = Math.max(item.jamieSupport[weekIdx] || 0, item.daveSupport[weekIdx] || 0, 1);
+            item.jamieSupport[weekIdx] = (newPerson === 'Jamie') ? curVal : 0;
+            item.daveSupport[weekIdx] = (newPerson === 'Dave') ? curVal : 0;
           } else if (type === 'suppSess') {
             const val = parseInt(e.target.value, 10) || 0;
-            if (item.jamieSupport[weekIdx] > 0) item.jamieSupport[weekIdx] = val;
-            if (item.daveSupport[weekIdx] > 0) item.daveSupport[weekIdx] = val;
-            if (item.jamieSupport[weekIdx] === 0 && item.daveSupport[weekIdx] === 0 && val > 0) {
-              item.daveSupport[weekIdx] = val; // default fallback
+            if ((item.jamieSupport[weekIdx] || 0) > 0) item.jamieSupport[weekIdx] = val;
+            if ((item.daveSupport[weekIdx] || 0) > 0) item.daveSupport[weekIdx] = val;
+            if ((item.jamieSupport[weekIdx] || 0) === 0 && (item.daveSupport[weekIdx] || 0) === 0 && val > 0) {
+              item.daveSupport[weekIdx] = val;
             }
           }
 
           saveCurrentWorkingState();
+          renderSpreadsheet();
           renderAll();
         });
         el.addEventListener('click', (e) => e.stopPropagation());
