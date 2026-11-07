@@ -303,7 +303,6 @@
     .bar-support { background-color: #8ab4f8; width: 100%; }
     .bar-lead-jamie { background-color: #1e8e3e; width: 100%; }
     .bar-support-jamie { background-color: #81c995; width: 100%; }
-    .bar-overflow { background-color: #d93025; width: 100%; } /* Over capacity highlight */
 
     .bar-col .tooltip {
       display: none;
@@ -351,7 +350,7 @@
       border: 1px solid #e8eaed;
       padding: 0;
       vertical-align: top;
-      height: 28px;
+      height: 32px;
     }
     .col-week { width: 140px; }
     .col-gt { width: 35%; }
@@ -369,7 +368,7 @@
       font-style: italic;
       font-size: 10px;
       text-align: center;
-      line-height: 28px;
+      line-height: 32px;
     }
     .lane-container { display: flex; width: 100%; height: 100%; }
     .lane { flex: 1; height: 100%; padding: 0 2px; }
@@ -384,7 +383,11 @@
     .v-line-gg { background-color: #d93025; }
     .v-start { border-top-left-radius: 5px; border-top-right-radius: 5px; }
     .v-end { border-bottom-left-radius: 5px; border-bottom-right-radius: 5px; }
-    .v-meta { font-size: 9px; font-weight: normal; opacity: 0.95; }
+    .v-meta { font-size: 9px; font-weight: normal; opacity: 0.95; display: flex; gap: 4px; align-items: center; margin-top: 2px; }
+    .v-meta input {
+      width: 26px; height: 16px; font-size: 9px; padding: 0 2px; text-align: center;
+      border: 1px solid rgba(255,255,255,0.6); background: rgba(0,0,0,0.15); color: #fff; border-radius: 2px;
+    }
 
     @media print {
       body { height: auto; overflow: visible; background: #ffffff; }
@@ -458,7 +461,7 @@
 
     <!-- VISUAL 1: GANTT CHART -->
     <div class="gantt-card">
-      <div class="section-title">1. Master Gantt Timeline (52 Weeks) <span style="font-size:10px; font-weight:normal; color:#5f6368;">(Tip: Click any bar block to quick-edit its start date)</span></div>
+      <div class="section-title">1. Master Gantt Timeline (52 Weeks) <span style="font-size:10px; font-weight:normal; color:#5f6368;">(Tip: Click any bar block to quick-edit its dates)</span></div>
       <div class="weeks-header" id="weeks-header">
         <div style="text-align: left;">Cohort</div>
       </div>
@@ -490,7 +493,7 @@
 
     <!-- VISUAL 3: CONTINUOUS VERTICAL MATRIX -->
     <div class="matrix-card">
-      <div class="section-title">3. 52-Week Vertical Programme Flow (Split Lanes & Seamless Lines)</div>
+      <div class="section-title">3. 52-Week Vertical Programme Flow (Edit sessions inline or click blocks to drag/shift weeks)</div>
       <div style="max-height: 600px; overflow-y: auto; border: 1px solid #dadce0; border-radius: 6px;">
         <table class="matrix-table">
           <colgroup>
@@ -516,7 +519,7 @@
 
   <script>
     let activeFilter = 'All';
-    const MAX_CAPACITY = 5; // Max sessions possible per week per person
+    const MAX_CAPACITY = 5;
 
     const defaultCohorts = [
       { id: 'GT1', programme: 'GT', start: '2027-02-15', end: '2027-03-12', lead: 'Dave', leadSessions: 3, support: 'Jamie', supportSessions: 0 },
@@ -540,6 +543,13 @@
       if (!str) return new Date(2027, 0, 1);
       const parts = str.split('-');
       return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    }
+
+    function formatDate(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
     }
 
     function getMondayOfWeek(w) {
@@ -824,7 +834,6 @@
     }
 
     function renderCharts() {
-      // Track separate lead and support sessions per week
       const daveData = Array.from({ length: 53 }, () => ({ lead: 0, support: 0 }));
       const jamieData = Array.from({ length: 53 }, () => ({ lead: 0, support: 0 }));
 
@@ -870,7 +879,7 @@
         if (d.support > 0) dHtml += `<div class="bar-support" style="height: ${(d.support / dTotal) * 100}%;"></div>`;
         if (d.lead > 0) dHtml += `<div class="bar-lead" style="height: ${(d.lead / dTotal) * 100}%;"></div>`;
         dHtml += `</div>`;
-        dHtml += `<div class="tooltip">W${w} (${dateLabel})<br>Lead: ${d.lead}s | Support: ${d.support}s<br>Total: ${d.total || dTotal}/${MAX_CAPACITY} max</div>`;
+        dHtml += `<div class="tooltip">W${w} (${dateLabel})<br>Lead: ${d.lead}s | Support: ${d.support}s<br>Total: ${dTotal}/${MAX_CAPACITY} max</div>`;
         dCol.innerHTML = dHtml;
         daveContainer.appendChild(dCol);
 
@@ -936,11 +945,7 @@
                 const { startW, endW } = getCohortMetrics(matchedItem);
                 const isStart = (w === startW);
                 const isEnd = (w === endW);
-
-                let sessStr = `${matchedItem.leadSessions}s/wk`;
-                if (activeFilter !== 'All' && matchedItem.support === activeFilter) {
-                  sessStr = `${matchedItem.supportSessions}s/wk (Supp)`;
-                }
+                const cohortIndex = cohorts.findIndex(c => c.id === matchedItem.id);
 
                 const line = document.createElement('div');
                 let cls = `v-line v-line-${prog.toLowerCase()}`;
@@ -949,7 +954,35 @@
                 line.className = cls;
 
                 if (isStart) {
-                  line.innerHTML = `<div>${matchedItem.id}</div><div class="v-meta">${matchedItem.lead} (${sessStr})</div>`;
+                  line.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <span>${matchedItem.id}</span>
+                      <span title="Click to shift dates" style="cursor:pointer; font-size:9px; opacity:0.8;">📅</span>
+                    </div>
+                    <div class="v-meta">
+                      <span>L:</span><input type="number" min="0" max="5" value="${matchedItem.leadSessions}" data-index="${cohortIndex}" data-key="leadSessions" title="Lead sessions per week">
+                      <span>S:</span><input type="number" min="0" max="5" value="${matchedItem.supportSessions}" data-index="${cohortIndex}" data-key="supportSessions" title="Support sessions per week">
+                    </div>
+                  `;
+
+                  // Click icon to shift programme block up/down (dates)
+                  const dateShiftBtn = line.querySelector('span[title="Click to shift dates"]');
+                  dateShiftBtn.onclick = (ev) => {
+                    ev.stopPropagation();
+                    const shiftWeeks = prompt(`Shift ${matchedItem.id} by how many weeks? (Use positive number for forward, negative for backward):`, "1");
+                    if (shiftWeeks !== null && !isNaN(shiftWeeks)) {
+                      const days = parseInt(shiftWeeks, 10) * 7;
+                      const sDate = parseDate(matchedItem.start);
+                      const eDate = parseDate(matchedItem.end);
+                      sDate.setDate(sDate.getDate() + days);
+                      eDate.setDate(eDate.getDate() + days);
+                      cohorts[cohortIndex].start = formatDate(sDate);
+                      cohorts[cohortIndex].end = formatDate(eDate);
+                      saveCurrentWorkingState();
+                      renderSpreadsheet();
+                      renderAll();
+                    }
+                  };
                 }
                 lane.appendChild(line);
               }
@@ -961,6 +994,22 @@
         });
         tbody.appendChild(tr);
       }
+
+      // Matrix inline input event binding for lead/support session counts
+      tbody.querySelectorAll('.v-meta input').forEach(inp => {
+        inp.addEventListener('change', (e) => {
+          const idx = parseInt(e.target.getAttribute('data-index'), 10);
+          const key = e.target.getAttribute('data-key');
+          if (cohorts[idx]) {
+            const val = parseInt(e.target.value, 10) || 0;
+            cohorts[idx][key] = val;
+            saveCurrentWorkingState();
+            renderSpreadsheet();
+            renderAll();
+          }
+        });
+        inp.addEventListener('click', (e) => e.stopPropagation());
+      });
     }
 
     function setupControls() {
