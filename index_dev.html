@@ -233,7 +233,7 @@
     }
     .block:hover .gantt-tooltip { display: block; }
 
-    /* Visual 2: Workload Stacked Bars */
+    /* Visual 2: Workload Stacked Bars (RAG Color Definitions) */
     .chart-card {
       background: #ffffff;
       border: 1px solid #dadce0;
@@ -299,10 +299,17 @@
       border-radius: 2px 2px 0 0;
       overflow: hidden;
     }
-    .bar-lead { background-color: #1a73e8; width: 100%; }
-    .bar-support { background-color: #8ab4f8; width: 100%; }
-    .bar-lead-jamie { background-color: #1e8e3e; width: 100%; }
-    .bar-support-jamie { background-color: #81c995; width: 100%; }
+
+    /* RAG Shading Classes */
+    /* Green (&le; 3) */
+    .bar-lead-green { background-color: #137333; width: 100%; }
+    .bar-support-green { background-color: #81c995; width: 100%; }
+    /* Yellow / Amber (= 4) */
+    .bar-lead-amber { background-color: #b06000; width: 100%; }
+    .bar-support-amber { background-color: #fcd116; width: 100%; }
+    /* Red (&ge; 5) */
+    .bar-lead-red { background-color: #c5221f; width: 100%; }
+    .bar-support-red { background-color: #f28b82; width: 100%; }
 
     .bar-col .tooltip {
       display: none;
@@ -481,23 +488,20 @@
 
     <!-- VISUAL 2: WORKLOAD CHARTS -->
     <div class="chart-card">
-      <div class="section-title">2. Leader & Support Weekly Workload (Max Capacity: 5 Sessions/Wk)</div>
+      <div class="section-title">2. Leader & Support Weekly Workload (RAG: &le;3 Green, 4 Amber, &ge;5 Red)</div>
       
       <div class="chart-header-row">
-        <div class="chart-title">Dave <span class="badge badge-dave">Weekly Sessions</span></div>
+        <div class="chart-title">Dave & Jamie <span class="badge badge-dave">Weekly Workload Status</span></div>
         <div class="chart-legend">
-          <div class="legend-item"><div class="legend-color" style="background:#1a73e8;"></div>Lead</div>
-          <div class="legend-item"><div class="legend-color" style="background:#8ab4f8;"></div>Support</div>
+          <div class="legend-item"><div class="legend-color" style="background:#137333;"></div>&le;3 Green</div>
+          <div class="legend-item"><div class="legend-color" style="background:#b06000;"></div>4 Amber</div>
+          <div class="legend-item"><div class="legend-color" style="background:#c5221f;"></div>&ge;5 Red</div>
         </div>
       </div>
       <div class="chart-grid" id="dave-chart"></div>
       
       <div class="chart-header-row" style="margin-top: 16px;">
         <div class="chart-title">Jamie <span class="badge badge-jamie">Weekly Sessions</span></div>
-        <div class="chart-legend">
-          <div class="legend-item"><div class="legend-color" style="background:#1e8e3e;"></div>Lead</div>
-          <div class="legend-item"><div class="legend-color" style="background:#81c995;"></div>Support</div>
-        </div>
       </div>
       <div class="chart-grid" id="jamie-chart"></div>
     </div>
@@ -554,13 +558,6 @@
       if (!str) return new Date(2027, 0, 1);
       const parts = str.split('-');
       return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-    }
-
-    function formatDate(d) {
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
     }
 
     function getMondayOfWeek(w) {
@@ -871,15 +868,23 @@
         const monday = getMondayOfWeek(w);
         const dateLabel = `${monday.getDate().toString().padStart(2, '0')} ${months[monday.getMonth()]}`;
 
+        // Helper to determine RAG suffix based on total sessions (Lead + Support)
+        const getRagSuffix = (total) => {
+          if (total <= 3) return 'green';
+          if (total === 4) return 'amber';
+          return 'red';
+        };
+
         // Dave Column
         const d = daveData[w];
         const dTotal = d.lead + d.support;
+        const dRag = getRagSuffix(dTotal);
         const dCol = document.createElement('div');
         dCol.className = 'bar-col';
         
         let dHtml = `<div class="stacked-bar-container" style="height: ${Math.min(100, (dTotal / MAX_CAPACITY) * 100)}%;">`;
-        if (d.support > 0) dHtml += `<div class="bar-support" style="height: ${(d.support / dTotal) * 100}%;"></div>`;
-        if (d.lead > 0) dHtml += `<div class="bar-lead" style="height: ${(d.lead / dTotal) * 100}%;"></div>`;
+        if (d.support > 0) dHtml += `<div class="bar-support-${dRag}" style="height: ${(d.support / dTotal) * 100}%;"></div>`;
+        if (d.lead > 0) dHtml += `<div class="bar-lead-${dRag}" style="height: ${(d.lead / dTotal) * 100}%;"></div>`;
         dHtml += `</div>`;
         dHtml += `<div class="tooltip">W${w} (${dateLabel})<br>Lead: ${d.lead}s | Support: ${d.support}s<br>Total: ${dTotal}/${MAX_CAPACITY} max</div>`;
         dCol.innerHTML = dHtml;
@@ -888,12 +893,13 @@
         // Jamie Column
         const j = jamieData[w];
         const jTotal = j.lead + j.support;
+        const jRag = getRagSuffix(jTotal);
         const jCol = document.createElement('div');
         jCol.className = 'bar-col';
 
         let jHtml = `<div class="stacked-bar-container" style="height: ${Math.min(100, (jTotal / MAX_CAPACITY) * 100)}%;">`;
-        if (j.support > 0) jHtml += `<div class="bar-support-jamie" style="height: ${(j.support / jTotal) * 100}%;"></div>`;
-        if (j.lead > 0) jHtml += `<div class="bar-lead-jamie" style="height: ${(j.lead / jTotal) * 100}%;"></div>`;
+        if (j.support > 0) jHtml += `<div class="bar-support-${jRag}" style="height: ${(j.support / jTotal) * 100}%;"></div>`;
+        if (j.lead > 0) jHtml += `<div class="bar-lead-${jRag}" style="height: ${(j.lead / jTotal) * 100}%;"></div>`;
         jHtml += `</div>`;
         jHtml += `<div class="tooltip">W${w} (${dateLabel})<br>Lead: ${j.lead}s | Support: ${j.support}s<br>Total: ${jTotal}/${MAX_CAPACITY} max</div>`;
         jCol.innerHTML = jHtml;
