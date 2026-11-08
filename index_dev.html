@@ -310,7 +310,7 @@
       transform: translateX(-50%);
       background-color: #202124;
       color: #ffffff;
-      padding: 6px 10px;
+      padding: 6px 8px;
       border-radius: 4px;
       font-size: 10px;
       white-space: nowrap;
@@ -500,7 +500,7 @@
 
     <!-- VISUAL 3: CONTINUOUS VERTICAL MATRIX -->
     <div class="matrix-card">
-      <div class="section-title">3. 52-Week Vertical Programme Flow (Set Lead/Support person & session counts week-by-week)</div>
+      <div class="section-title">3. 52-Week Vertical Programme Flow (Click 📅 on start week to shift dates, or edit session counts)</div>
       <div style="max-height: 600px; overflow-y: auto; border: 1px solid #dadce0; border-radius: 6px;">
         <table class="matrix-table">
           <colgroup>
@@ -550,6 +550,13 @@
       if (!str) return new Date(2027, 0, 1);
       const parts = str.split('-');
       return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    }
+
+    function formatDate(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
     }
 
     function getMondayOfWeek(w) {
@@ -860,7 +867,6 @@
         const monday = getMondayOfWeek(w);
         const dateLabel = `${monday.getDate().toString().padStart(2, '0')} ${months[monday.getMonth()]}`;
 
-        // Helper to determine solid RAG class based on total sessions (&le;3 green, 4 yellow, &ge;5 red)
         const getRagClass = (total) => {
           if (total <= 3) return 'bar-green';
           if (total === 4) return 'bar-yellow';
@@ -960,7 +966,10 @@
                 line.className = cls;
 
                 line.innerHTML = `
-                  <div style="font-weight:bold;">${matchedItem.id}</div>
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:bold;">${matchedItem.id}</span>
+                    ${isStart ? `<span class="date-shift-btn" title="Shift start/end dates by X weeks" style="cursor:pointer; font-size:10px; padding:0 3px; background:rgba(0,0,0,0.15); border-radius:2px;">📅</span>` : ''}
+                  </div>
                   <div class="v-meta">
                     <div class="v-meta-row">
                       <span>L:</span>
@@ -982,6 +991,28 @@
                     </div>
                   </div>
                 `;
+
+                // Date shift handler on 📅 icon
+                if (isStart) {
+                  const shiftBtn = line.querySelector('.date-shift-btn');
+                  shiftBtn.onclick = (ev) => {
+                    ev.stopPropagation();
+                    const weeks = prompt(`Shift ${matchedItem.id} by how many weeks?\n(Enter positive number to move forward, negative to move backward):`, "1");
+                    if (weeks !== null && !isNaN(weeks)) {
+                      const dayShift = parseInt(weeks, 10) * 7;
+                      const sDate = parseDate(matchedItem.start);
+                      const eDate = parseDate(matchedItem.end);
+                      sDate.setDate(sDate.getDate() + dayShift);
+                      eDate.setDate(eDate.getDate() + dayShift);
+                      cohorts[cohortIndex].start = formatDate(sDate);
+                      cohorts[cohortIndex].end = formatDate(eDate);
+                      saveCurrentWorkingState();
+                      renderSpreadsheet();
+                      renderAll();
+                    }
+                  };
+                }
+
                 lane.appendChild(line);
               }
               laneContainer.appendChild(lane);
