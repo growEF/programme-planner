@@ -351,6 +351,7 @@
       padding: 0;
       vertical-align: top;
       height: 52px;
+      transition: height 0.2s;
     }
     .col-week { width: 140px; }
     .col-gt { width: 35%; }
@@ -393,6 +394,11 @@
       border: 1px solid rgba(255,255,255,0.6); background: rgba(0,0,0,0.2); color: #fff; border-radius: 2px;
     }
 
+    /* Streamlined View Mode Classes */
+    body.streamlined-view .v-meta { display: none !important; }
+    body.streamlined-view .matrix-table td { height: 28px !important; }
+    body.streamlined-view .empty-cell { line-height: 28px !important; }
+
     @media print {
       body { height: auto; overflow: visible; background: #ffffff; }
       .top-header, .spreadsheet-card { display: none !important; }
@@ -411,6 +417,7 @@
       <button class="btn active" id="btn-all">All Programmes</button>
       <button class="btn" id="btn-dave">Dave's View</button>
       <button class="btn" id="btn-jamie">Jamie's View</button>
+      <button class="btn active" id="btn-toggle-details" style="margin-left: 10px;">Detailed View</button>
       <button class="btn btn-pdf" id="btn-pdf">📄 Download PDF</button>
     </div>
   </div>
@@ -1039,7 +1046,7 @@
     function setupControls() {
       const setFilter = (filter, btn) => {
         activeFilter = filter;
-        document.querySelectorAll('.top-header .btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.top-header .btn:not(#btn-toggle-details)').forEach(b => b.classList.remove('active'));
         if (btn) btn.classList.add('active');
         renderAll();
       };
@@ -1048,11 +1055,25 @@
       const btnDave = document.getElementById('btn-dave');
       const btnJamie = document.getElementById('btn-jamie');
       const btnPdf = document.getElementById('btn-pdf');
+      const btnToggleDetails = document.getElementById('btn-toggle-details');
 
       if (btnAll) btnAll.onclick = () => setFilter('All', btnAll);
       if (btnDave) btnDave.onclick = () => setFilter('Dave', btnDave);
       if (btnJamie) btnJamie.onclick = () => setFilter('Jamie', btnJamie);
-      if (btnPdf) btnPdf.onclick = () => { window.print(); };
+
+      if (btnToggleDetails) {
+        let detailed = true;
+        btnToggleDetails.onclick = () => {
+          detailed = !detailed;
+          document.body.classList.toggle('streamlined-view', !detailed);
+          btnToggleDetails.textContent = detailed ? 'Detailed View' : 'Streamlined View';
+          btnToggleDetails.classList.toggle('active', detailed);
+        };
+      }
+
+      if (btnPdf) {
+        btnPdf.onclick = () => { window.print(); };
+      }
     }
 
     function renderAll() {
