@@ -528,7 +528,7 @@
     let activeFilter = 'All';
     const MAX_CAPACITY = 5;
 
-    const defaultCohorts = [
+    const fallbackCohorts = [
       { id: 'GT1', programme: 'GT', start: '2027-02-15', end: '2027-03-12', jamieLead: [0,0,0,0], daveLead: [3,3,3,3], jamieSupport: [3,3,3,3], daveSupport: [0,0,0,0] },
       { id: 'GT2', programme: 'GT', start: '2027-03-01', end: '2027-03-26', jamieLead: [3,3,3,3], daveLead: [0,0,0,0], jamieSupport: [0,0,0,0], daveSupport: [3,3,3,3] },
       { id: 'GT3', programme: 'GT', start: '2027-04-19', end: '2027-05-14', jamieLead: [0,0,0,0], daveLead: [3,3,3,3], jamieSupport: [3,3,3,3], daveSupport: [0,0,0,0] },
@@ -543,8 +543,22 @@
       { id: 'GG3', programme: 'GG', start: '2027-11-29', end: '2027-12-24', jamieLead: [0,0,0,0], daveLead: [2,2,2,2], jamieSupport: [0,0,0,0], daveSupport: [0,0,0,0] }
     ];
 
-    let cohorts = JSON.parse(JSON.stringify(defaultCohorts));
+    let cohorts = JSON.parse(JSON.stringify(fallbackCohorts));
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    async function loadDefaultSchedule() {
+      try {
+        const response = await fetch('default_schedule.json');
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data) && data.length > 0) {
+            cohorts = data;
+          }
+        }
+      } catch (err) {
+        console.warn("Could not fetch default_schedule.json (or running locally). Using fallback data.", err);
+      }
+    }
 
     function parseDate(str) {
       if (!str) return new Date(2027, 0, 1);
@@ -603,7 +617,6 @@
       return true;
     }
 
-    // Persistent lane assignment helper
     function getCohortLanes(progCohorts) {
       const sorted = [...progCohorts].sort((a, b) => parseDate(a.start) - parseDate(b.start));
       const laneAssignments = {};
@@ -663,7 +676,7 @@
       const activeState = localStorage.getItem('programme_planner_active');
       if (activeState) {
         try { cohorts = JSON.parse(activeState); } 
-        catch(e) { cohorts = JSON.parse(JSON.stringify(defaultCohorts)); }
+        catch(e) { cohorts = JSON.parse(JSON.stringify(fallbackCohorts)); }
       }
     }
 
@@ -681,7 +694,7 @@
       select.addEventListener('change', (e) => {
         const selected = e.target.value;
         if (selected === 'default') {
-          cohorts = JSON.parse(JSON.stringify(defaultCohorts));
+          cohorts = JSON.parse(JSON.stringify(fallbackCohorts));
         } else {
           const versions = getSavedVersions();
           if (versions[selected]) cohorts = JSON.parse(JSON.stringify(versions[selected]));
@@ -712,7 +725,7 @@
           delete versions[selected];
           saveVersionsToStorage(versions);
           select.value = 'default';
-          cohorts = JSON.parse(JSON.stringify(defaultCohorts));
+          cohorts = JSON.parse(JSON.stringify(fallbackCohorts));
           saveCurrentWorkingState();
           updateVersionDropdown();
           renderSpreadsheet();
@@ -931,7 +944,6 @@
       tbody.innerHTML = '';
       const progs = ['GT', 'GE', 'GG'];
 
-      // Pre-calculate persistent lane allocations
       const gtLanes = getCohortLanes(cohorts.filter(c => c.programme === 'GT'));
       const ggLanes = getCohortLanes(cohorts.filter(c => c.programme === 'GG'));
 
@@ -1136,8 +1148,9 @@
       renderMatrix();
     }
 
-    function init() {
+    async function init() {
       try {
+        await loadDefaultSchedule();
         loadActiveOrLastVersion();
         initHeader();
         setupControls();
