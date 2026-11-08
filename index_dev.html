@@ -603,6 +603,32 @@
       return true;
     }
 
+    // Persistent lane assignment helper
+    function getCohortLanes(progCohorts) {
+      const sorted = [...progCohorts].sort((a, b) => parseDate(a.start) - parseDate(b.start));
+      const laneAssignments = {};
+      let lane0End = null;
+      let lane1End = null;
+
+      sorted.forEach(c => {
+        const s = parseDate(c.start);
+        const e = parseDate(c.end);
+
+        if (!lane0End || s > lane0End) {
+          laneAssignments[c.id] = 0;
+          lane0End = e;
+        } else if (!lane1End || s > lane1End) {
+          laneAssignments[c.id] = 1;
+          lane1End = e;
+        } else {
+          laneAssignments[c.id] = 1;
+          if (e > lane1End) lane1End = e;
+        }
+      });
+
+      return laneAssignments;
+    }
+
     function getSavedVersions() {
       try { return JSON.parse(localStorage.getItem('programme_planner_versions') || '{}'); } 
       catch (e) { return {}; }
@@ -905,6 +931,10 @@
       tbody.innerHTML = '';
       const progs = ['GT', 'GE', 'GG'];
 
+      // Pre-calculate persistent lane allocations
+      const gtLanes = getCohortLanes(cohorts.filter(c => c.programme === 'GT'));
+      const ggLanes = getCohortLanes(cohorts.filter(c => c.programme === 'GG'));
+
       for (let w = 1; w <= 52; w++) {
         const monday = getMondayOfWeek(w);
         const monthStr = months[monday.getMonth()];
@@ -931,27 +961,17 @@
             laneContainer.className = 'lane-container';
             const maxLanes = (prog === 'GT' || prog === 'GG') ? 2 : 1;
 
-            // Sophisticated Lane Assignment:
-            // 1. All programmes start in Lane 0 (left).
-            // 2. If there are 2 overlapping programmes, sort them by start date:
-            //    - The one with the earlier start goes to Lane 0 (left).
-            //    - The one with the later start goes to Lane 1 (right).
-            let assignedLanes = [];
-            if (matching.length === 1 || maxLanes === 1) {
-              assignedLanes.push({ item: matching[0], lane: 0 });
-            } else {
-              // Sort matching items by start date ascending (earlier start first)
-              const sorted = [...matching].sort((a, b) => parseDate(a.start) - parseDate(b.start));
-              assignedLanes.push({ item: sorted[0], lane: 0 });
-              assignedLanes.push({ item: sorted[1], lane: 1 });
-            }
+            const laneMap = prog === 'GT' ? gtLanes : (prog === 'GG' ? ggLanes : {});
 
             for (let l = 0; l < maxLanes; l++) {
               const lane = document.createElement('div');
               lane.className = 'lane';
 
-              const matchInfo = assignedLanes.find(a => a.lane === l);
-              const matchedItem = matchInfo ? matchInfo.item : null;
+              const matchedItem = matching.find(c => {
+                if (maxLanes === 1) return true;
+                const assignedLane = laneMap[c.id] !== undefined ? laneMap[c.id] : 0;
+                return assignedLane === l;
+              });
 
               if (matchedItem) {
                 const { startW } = getCohortMetrics(matchedItem);
