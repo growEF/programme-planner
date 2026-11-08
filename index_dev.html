@@ -931,15 +931,27 @@
             laneContainer.className = 'lane-container';
             const maxLanes = (prog === 'GT' || prog === 'GG') ? 2 : 1;
 
+            // Sophisticated Lane Assignment:
+            // 1. All programmes start in Lane 0 (left).
+            // 2. If there are 2 overlapping programmes, sort them by start date:
+            //    - The one with the earlier start goes to Lane 0 (left).
+            //    - The one with the later start goes to Lane 1 (right).
+            let assignedLanes = [];
+            if (matching.length === 1 || maxLanes === 1) {
+              assignedLanes.push({ item: matching[0], lane: 0 });
+            } else {
+              // Sort matching items by start date ascending (earlier start first)
+              const sorted = [...matching].sort((a, b) => parseDate(a.start) - parseDate(b.start));
+              assignedLanes.push({ item: sorted[0], lane: 0 });
+              assignedLanes.push({ item: sorted[1], lane: 1 });
+            }
+
             for (let l = 0; l < maxLanes; l++) {
               const lane = document.createElement('div');
               lane.className = 'lane';
 
-              const matchedItem = matching.find(c => {
-                if (maxLanes === 1) return true;
-                const num = parseInt(c.id.replace(/\D/g, ''), 10) || 1;
-                return (num % 2 !== 0) ? (l === 0) : (l === 1);
-              });
+              const matchInfo = assignedLanes.find(a => a.lane === l);
+              const matchedItem = matchInfo ? matchInfo.item : null;
 
               if (matchedItem) {
                 const { startW } = getCohortMetrics(matchedItem);
@@ -992,7 +1004,6 @@
                   </div>
                 `;
 
-                // Date shift handler on 📅 icon
                 if (isStart) {
                   const shiftBtn = line.querySelector('.date-shift-btn');
                   shiftBtn.onclick = (ev) => {
