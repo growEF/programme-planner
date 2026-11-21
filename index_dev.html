@@ -233,7 +233,7 @@
     }
     .block:hover .gantt-tooltip { display: block; }
 
-    /* Visual 2: Workload Stacked Bars */
+    /* Visual 2: Workload Solid RAG Bars */
     .chart-card {
       background: #ffffff;
       border: 1px solid #dadce0;
@@ -291,19 +291,16 @@
       height: 100%;
       position: relative;
     }
-    .stacked-bar-container {
+    .solid-bar {
       width: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
       border-radius: 2px 2px 0 0;
-      overflow: hidden;
+      transition: height 0.2s;
     }
-    .bar-lead { background-color: #1a73e8; width: 100%; }
-    .bar-support { background-color: #8ab4f8; width: 100%; }
-    .bar-lead-jamie { background-color: #1e8e3e; width: 100%; }
-    .bar-support-jamie { background-color: #81c995; width: 100%; }
-    .bar-overflow { background-color: #d93025; width: 100%; } /* Over capacity highlight */
+
+    /* Solid RAG Colors */
+    .bar-green { background-color: #34a853; }
+    .bar-yellow { background-color: #fbbc04; }
+    .bar-red { background-color: #ea4335; }
 
     .bar-col .tooltip {
       display: none;
@@ -315,11 +312,12 @@
       color: #ffffff;
       padding: 6px 8px;
       border-radius: 4px;
-      font-size: 9px;
+      font-size: 10px;
       white-space: nowrap;
       z-index: 10;
-      line-height: 1.3;
+      line-height: 1.4;
       text-align: left;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
     .bar-col:hover .tooltip { display: block; }
 
@@ -351,7 +349,8 @@
       border: 1px solid #e8eaed;
       padding: 0;
       vertical-align: top;
-      height: 28px;
+      height: 52px;
+      transition: height 0.2s;
     }
     .col-week { width: 140px; }
     .col-gt { width: 35%; }
@@ -369,7 +368,7 @@
       font-style: italic;
       font-size: 10px;
       text-align: center;
-      line-height: 28px;
+      line-height: 52px;
     }
     .lane-container { display: flex; width: 100%; height: 100%; }
     .lane { flex: 1; height: 100%; padding: 0 2px; }
@@ -384,7 +383,20 @@
     .v-line-gg { background-color: #d93025; }
     .v-start { border-top-left-radius: 5px; border-top-right-radius: 5px; }
     .v-end { border-bottom-left-radius: 5px; border-bottom-right-radius: 5px; }
-    .v-meta { font-size: 9px; font-weight: normal; opacity: 0.95; }
+    .v-meta { font-size: 9px; font-weight: normal; opacity: 0.95; display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
+    .v-meta-row { display: flex; gap: 2px; align-items: center; }
+    .v-meta select {
+      height: 16px; font-size: 9px; padding: 0; background: rgba(0,0,0,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.6); border-radius: 2px;
+    }
+    .v-meta input {
+      width: 22px; height: 16px; font-size: 9px; padding: 0; text-align: center;
+      border: 1px solid rgba(255,255,255,0.6); background: rgba(0,0,0,0.2); color: #fff; border-radius: 2px;
+    }
+
+    /* Streamlined View Mode Classes */
+    body.streamlined-view .v-meta { display: none !important; }
+    body.streamlined-view .matrix-table td { height: 28px !important; }
+    body.streamlined-view .empty-cell { line-height: 28px !important; }
 
     @media print {
       body { height: auto; overflow: visible; background: #ffffff; }
@@ -404,6 +416,7 @@
       <button class="btn active" id="btn-all">All Programmes</button>
       <button class="btn" id="btn-dave">Dave's View</button>
       <button class="btn" id="btn-jamie">Jamie's View</button>
+      <button class="btn active" id="btn-toggle-details" style="margin-left: 10px;">Detailed View</button>
       <button class="btn btn-pdf" id="btn-pdf">📄 Download PDF</button>
     </div>
   </div>
@@ -435,7 +448,7 @@
     <div class="spreadsheet-card">
       <div class="section-title">
         <span>Master Cohort Spreadsheet Editor (Live Synchronized Data Grid)</span>
-        <span style="font-size:10px; font-weight:normal; color:#5f6368;">Edit any cell below to update timelines and graphs instantly</span>
+        <span style="font-size:10px; font-weight:normal; color:#5f6368;">Edit dates or comma-separated weekly arrays below</span>
       </div>
       <div class="table-container">
         <table class="data-table">
@@ -443,12 +456,12 @@
             <tr>
               <th style="width:70px;">ID</th>
               <th style="width:70px;">Prog</th>
-              <th style="width:130px;">Start Date</th>
-              <th style="width:130px;">End Date</th>
-              <th style="width:140px;">Lead</th>
-              <th style="width:90px;">Lead Sess/Wk</th>
-              <th style="width:130px;">Support</th>
-              <th style="width:90px;">Supp Sess/Wk</th>
+              <th style="width:120px;">Start Date</th>
+              <th style="width:120px;">End Date</th>
+              <th style="width:130px;">Jamie Lead</th>
+              <th style="width:130px;">Dave Lead</th>
+              <th style="width:130px;">Jamie Support</th>
+              <th style="width:130px;">Dave Support</th>
             </tr>
           </thead>
           <tbody id="spreadsheet-body"></tbody>
@@ -458,7 +471,7 @@
 
     <!-- VISUAL 1: GANTT CHART -->
     <div class="gantt-card">
-      <div class="section-title">1. Master Gantt Timeline (52 Weeks) <span style="font-size:10px; font-weight:normal; color:#5f6368;">(Tip: Click any bar block to quick-edit its start date)</span></div>
+      <div class="section-title">1. Master Gantt Timeline (52 Weeks) <span style="font-size:10px; font-weight:normal; color:#5f6368;">(Tip: Click any bar block to quick-edit its dates)</span></div>
       <div class="weeks-header" id="weeks-header">
         <div style="text-align: left;">Cohort</div>
       </div>
@@ -467,30 +480,27 @@
 
     <!-- VISUAL 2: WORKLOAD CHARTS -->
     <div class="chart-card">
-      <div class="section-title">2. Leader & Support Weekly Workload (Max Capacity: 5 Sessions/Wk)</div>
+      <div class="section-title">2. Leader & Support Weekly Workload (RAG: &le;3 Green, 4 Yellow, &ge;5 Red)</div>
       
       <div class="chart-header-row">
-        <div class="chart-title">Dave <span class="badge badge-dave">Weekly Sessions</span></div>
+        <div class="chart-title">Dave <span class="badge badge-dave">Weekly Workload</span></div>
         <div class="chart-legend">
-          <div class="legend-item"><div class="legend-color" style="background:#1a73e8;"></div>Lead</div>
-          <div class="legend-item"><div class="legend-color" style="background:#8ab4f8;"></div>Support</div>
+          <div class="legend-item"><div class="legend-color" style="background:#34a853;"></div>&le;3 Green</div>
+          <div class="legend-item"><div class="legend-color" style="background:#fbbc04;"></div>4 Yellow</div>
+          <div class="legend-item"><div class="legend-color" style="background:#ea4335;"></div>&ge;5 Red</div>
         </div>
       </div>
       <div class="chart-grid" id="dave-chart"></div>
       
       <div class="chart-header-row" style="margin-top: 16px;">
-        <div class="chart-title">Jamie <span class="badge badge-jamie">Weekly Sessions</span></div>
-        <div class="chart-legend">
-          <div class="legend-item"><div class="legend-color" style="background:#1e8e3e;"></div>Lead</div>
-          <div class="legend-item"><div class="legend-color" style="background:#81c995;"></div>Support</div>
-        </div>
+        <div class="chart-title">Jamie <span class="badge badge-jamie">Weekly Workload</span></div>
       </div>
       <div class="chart-grid" id="jamie-chart"></div>
     </div>
 
     <!-- VISUAL 3: CONTINUOUS VERTICAL MATRIX -->
     <div class="matrix-card">
-      <div class="section-title">3. 52-Week Vertical Programme Flow (Split Lanes & Seamless Lines)</div>
+      <div class="section-title">3. 52-Week Vertical Programme Flow (Click 📅 on start week to shift dates, or edit session counts)</div>
       <div style="max-height: 600px; overflow-y: auto; border: 1px solid #dadce0; border-radius: 6px;">
         <table class="matrix-table">
           <colgroup>
@@ -516,30 +526,51 @@
 
   <script>
     let activeFilter = 'All';
-    const MAX_CAPACITY = 5; // Max sessions possible per week per person
+    const MAX_CAPACITY = 5;
 
-    const defaultCohorts = [
-      { id: 'GT1', programme: 'GT', start: '2027-02-15', end: '2027-03-12', lead: 'Dave', leadSessions: 3, support: 'Jamie', supportSessions: 0 },
-      { id: 'GT2', programme: 'GT', start: '2027-03-01', end: '2027-03-26', lead: 'Jamie', leadSessions: 3, support: 'Dave', supportSessions: 0 },
-      { id: 'GT3', programme: 'GT', start: '2027-04-19', end: '2027-05-14', lead: 'Dave', leadSessions: 3, support: 'Jamie', supportSessions: 0 },
-      { id: 'GT4', programme: 'GT', start: '2027-05-24', end: '2027-06-18', lead: 'Jamie', leadSessions: 3, support: 'Dave', supportSessions: 0 },
-      { id: 'GT5', programme: 'GT', start: '2027-07-19', end: '2027-08-13', lead: 'Dave', leadSessions: 3, support: 'Jamie', supportSessions: 0 },
-      { id: 'GT6', programme: 'GT', start: '2027-08-23', end: '2027-09-17', lead: 'Jamie', leadSessions: 3, support: 'Dave', supportSessions: 0 },
-      { id: 'GE1', programme: 'GE', start: '2027-04-05', end: '2027-06-11', lead: 'Dave and Jamie', leadSessions: 1, support: 'None', supportSessions: 0 },
-      { id: 'GE2', programme: 'GE', start: '2027-06-28', end: '2027-09-03', lead: 'Dave and Jamie', leadSessions: 1, support: 'None', supportSessions: 0 },
-      { id: 'GE3', programme: 'GE', start: '2027-09-20', end: '2027-11-26', lead: 'Dave and Jamie', leadSessions: 1, support: 'None', supportSessions: 0 },
-      { id: 'GG1', programme: 'GG', start: '2027-10-04', end: '2027-10-29', lead: 'Dave', leadSessions: 2, support: 'Jamie', supportSessions: 0 },
-      { id: 'GG2', programme: 'GG', start: '2027-11-01', end: '2027-11-26', lead: 'Jamie', leadSessions: 2, support: 'Dave', supportSessions: 0 },
-      { id: 'GG3', programme: 'GG', start: '2027-11-29', end: '2027-12-24', lead: 'Dave and Jamie', leadSessions: 2, support: 'None', supportSessions: 0 }
+    const fallbackCohorts = [
+      { id: 'GT1', programme: 'GT', start: '2027-02-15', end: '2027-03-12', jamieLead: [0,0,0,0], daveLead: [3,3,3,3], jamieSupport: [3,3,3,3], daveSupport: [0,0,0,0] },
+      { id: 'GT2', programme: 'GT', start: '2027-03-01', end: '2027-03-26', jamieLead: [3,3,3,3], daveLead: [0,0,0,0], jamieSupport: [0,0,0,0], daveSupport: [3,3,3,3] },
+      { id: 'GT3', programme: 'GT', start: '2027-04-19', end: '2027-05-14', jamieLead: [0,0,0,0], daveLead: [3,3,3,3], jamieSupport: [3,3,3,3], daveSupport: [0,0,0,0] },
+      { id: 'GT4', programme: 'GT', start: '2027-05-24', end: '2027-06-18', jamieLead: [3,3,3,3], daveLead: [0,0,0,0], jamieSupport: [0,0,0,0], daveSupport: [3,3,3,3] },
+      { id: 'GT5', programme: 'GT', start: '2027-07-19', end: '2027-08-13', jamieLead: [0,0,0,0], daveLead: [3,3,3,3], jamieSupport: [3,3,3,3], daveSupport: [0,0,0,0] },
+      { id: 'GT6', programme: 'GT', start: '2027-08-23', end: '2027-09-17', jamieLead: [3,3,3,3], daveLead: [0,0,0,0], jamieSupport: [0,0,0,0], daveSupport: [3,3,3,3] },
+      { id: 'GE1', programme: 'GE', start: '2027-04-05', end: '2027-06-11', jamieLead: [0,0,0,0,0,0,0,0,0,0], daveLead: [1,1,1,1,1,1,1,1,1,1], jamieSupport: [0,0,0,0,0,0,0,0,0,0], daveSupport: [0,0,0,0,0,0,0,0,0,0] },
+      { id: 'GE2', programme: 'GE', start: '2027-06-28', end: '2027-09-03', jamieLead: [1,1,1,1,1,1,1,1,1,1], daveLead: [1,1,1,1,1,1,1,1,1,1], jamieSupport: [0,0,0,0,0,0,0,0,0,0], daveSupport: [0,0,0,0,0,0,0,0,0,0] },
+      { id: 'GE3', programme: 'GE', start: '2027-09-20', end: '2027-11-26', jamieLead: [1,1,1,1,1,1,1,1,1,1], daveLead: [0,0,0,0,0,0,0,0,0,0], jamieSupport: [0,0,0,0,0,0,0,0,0,0], daveSupport: [0,0,0,0,0,0,0,0,0,0] },
+      { id: 'GG1', programme: 'GG', start: '2027-10-04', end: '2027-10-29', jamieLead: [0,0,0,0], daveLead: [2,2,2,2], jamieSupport: [2,2,2,2], daveSupport: [0,0,0,0] },
+      { id: 'GG2', programme: 'GG', start: '2027-11-01', end: '2027-11-26', jamieLead: [2,2,2,2], daveLead: [0,0,0,0], jamieSupport: [0,0,0,0], daveSupport: [2,2,2,2] },
+      { id: 'GG3', programme: 'GG', start: '2027-11-29', end: '2027-12-24', jamieLead: [0,0,0,0], daveLead: [2,2,2,2], jamieSupport: [0,0,0,0], daveSupport: [0,0,0,0] }
     ];
 
-    let cohorts = JSON.parse(JSON.stringify(defaultCohorts));
+    let cohorts = JSON.parse(JSON.stringify(fallbackCohorts));
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    async function loadDefaultSchedule() {
+      try {
+        const response = await fetch('default_schedule.json');
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data) && data.length > 0) {
+            cohorts = data;
+          }
+        }
+      } catch (err) {
+        console.warn("Could not fetch default_schedule.json (or running locally). Using fallback data.", err);
+      }
+    }
 
     function parseDate(str) {
       if (!str) return new Date(2027, 0, 1);
       const parts = str.split('-');
       return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    }
+
+    function formatDate(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
     }
 
     function getMondayOfWeek(w) {
@@ -562,19 +593,53 @@
 
       const startW = getWeekNumberFromDate(startDate);
       const endW = getWeekNumberFromDate(endDate);
-      
       const durationWeeks = Math.max(1, (endW - startW) + 1);
-      const totalDays = Math.max(1, Math.round((endDate - startDate) / 86400000) + 1);
 
+      ['jamieLead', 'daveLead', 'jamieSupport', 'daveSupport'].forEach(key => {
+        if (!Array.isArray(item[key]) || item[key].length !== durationWeeks) {
+          const defaultVal = Array.isArray(item[key]) ? item[key][0] || 0 : 0;
+          item[key] = Array(durationWeeks).fill(defaultVal);
+        }
+      });
+
+      const totalDays = Math.max(1, Math.round((endDate - startDate) / 86400000) + 1);
       return { startW, endW, durationWeeks, totalDays, startDate, endDate };
     }
 
     function isPersonInvolved(item, person) {
       if (!item) return false;
       if (person === 'All') return true;
-      const isLead = item.lead && item.lead.indexOf(person) !== -1;
-      const isSupport = item.support === person && item.supportSessions > 0;
-      return isLead || isSupport;
+      getCohortMetrics(item);
+      const involvedJamie = item.jamieLead.some(s => s > 0) || item.jamieSupport.some(s => s > 0);
+      const involvedDave = item.daveLead.some(s => s > 0) || item.daveSupport.some(s => s > 0);
+      if (person === 'Jamie') return involvedJamie;
+      if (person === 'Dave') return involvedDave;
+      return true;
+    }
+
+    function getCohortLanes(progCohorts) {
+      const sorted = [...progCohorts].sort((a, b) => parseDate(a.start) - parseDate(b.start));
+      const laneAssignments = {};
+      let lane0End = null;
+      let lane1End = null;
+
+      sorted.forEach(c => {
+        const s = parseDate(c.start);
+        const e = parseDate(c.end);
+
+        if (!lane0End || s > lane0End) {
+          laneAssignments[c.id] = 0;
+          lane0End = e;
+        } else if (!lane1End || s > lane1End) {
+          laneAssignments[c.id] = 1;
+          lane1End = e;
+        } else {
+          laneAssignments[c.id] = 1;
+          if (e > lane1End) lane1End = e;
+        }
+      });
+
+      return laneAssignments;
     }
 
     function getSavedVersions() {
@@ -611,7 +676,7 @@
       const activeState = localStorage.getItem('programme_planner_active');
       if (activeState) {
         try { cohorts = JSON.parse(activeState); } 
-        catch(e) { cohorts = JSON.parse(JSON.stringify(defaultCohorts)); }
+        catch(e) { cohorts = JSON.parse(JSON.stringify(fallbackCohorts)); }
       }
     }
 
@@ -629,7 +694,7 @@
       select.addEventListener('change', (e) => {
         const selected = e.target.value;
         if (selected === 'default') {
-          cohorts = JSON.parse(JSON.stringify(defaultCohorts));
+          cohorts = JSON.parse(JSON.stringify(fallbackCohorts));
         } else {
           const versions = getSavedVersions();
           if (versions[selected]) cohorts = JSON.parse(JSON.stringify(versions[selected]));
@@ -660,7 +725,7 @@
           delete versions[selected];
           saveVersionsToStorage(versions);
           select.value = 'default';
-          cohorts = JSON.parse(JSON.stringify(defaultCohorts));
+          cohorts = JSON.parse(JSON.stringify(fallbackCohorts));
           saveCurrentWorkingState();
           updateVersionDropdown();
           renderSpreadsheet();
@@ -717,43 +782,33 @@
       tbody.innerHTML = '';
 
       cohorts.forEach((item, index) => {
+        getCohortMetrics(item);
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td><strong>${item.id}</strong></td>
           <td><span style="padding:2px 6px; background:#e8f0fe; color:#174ea6; border-radius:4px; font-weight:bold;">${item.programme}</span></td>
           <td><input type="date" value="${item.start}" data-index="${index}" data-key="start"></td>
           <td><input type="date" value="${item.end}" data-index="${index}" data-key="end"></td>
-          <td>
-            <select data-index="${index}" data-key="lead">
-              <option value="Dave" ${item.lead === 'Dave' ? 'selected' : ''}>Dave</option>
-              <option value="Jamie" ${item.lead === 'Jamie' ? 'selected' : ''}>Jamie</option>
-              <option value="Dave and Jamie" ${item.lead === 'Dave and Jamie' ? 'selected' : ''}>Dave & Jamie</option>
-            </select>
-          </td>
-          <td><input type="number" min="0" max="5" value="${item.leadSessions}" data-index="${index}" data-key="leadSessions"></td>
-          <td>
-            <select data-index="${index}" data-key="support">
-              <option value="None" ${item.support === 'None' ? 'selected' : ''}>None</option>
-              <option value="Dave" ${item.support === 'Dave' ? 'selected' : ''}>Dave</option>
-              <option value="Jamie" ${item.support === 'Jamie' ? 'selected' : ''}>Jamie</option>
-            </select>
-          </td>
-          <td><input type="number" min="0" max="5" value="${item.supportSessions}" data-index="${index}" data-key="supportSessions"></td>
+          <td><input type="text" value="${item.jamieLead.join(',')}" data-index="${index}" data-key="jamieLead" title="Comma-separated array"></td>
+          <td><input type="text" value="${item.daveLead.join(',')}" data-index="${index}" data-key="daveLead" title="Comma-separated array"></td>
+          <td><input type="text" value="${item.jamieSupport.join(',')}" data-index="${index}" data-key="jamieSupport" title="Comma-separated array"></td>
+          <td><input type="text" value="${item.daveSupport.join(',')}" data-index="${index}" data-key="daveSupport" title="Comma-separated array"></td>
         `;
         tbody.appendChild(tr);
       });
 
-      tbody.querySelectorAll('input, select').forEach(el => {
+      tbody.querySelectorAll('input').forEach(el => {
         el.addEventListener('change', (e) => {
           const idx = parseInt(e.target.getAttribute('data-index'), 10);
           const key = e.target.getAttribute('data-key');
           if (cohorts[idx]) {
-            let val = e.target.value;
-            if (key === 'leadSessions' || key === 'supportSessions') {
-              val = parseInt(val, 10) || 0;
+            if (['jamieLead', 'daveLead', 'jamieSupport', 'daveSupport'].includes(key)) {
+              cohorts[idx][key] = e.target.value.split(',').map(n => parseInt(n.trim(), 10) || 0);
+            } else {
+              cohorts[idx][key] = e.target.value;
             }
-            cohorts[idx][key] = val;
             saveCurrentWorkingState();
+            renderSpreadsheet();
             renderAll();
           }
         });
@@ -796,9 +851,7 @@
           ${item.id}
           <div class="gantt-tooltip">
             <strong>${item.id} (${item.programme})</strong><br>
-            📅 ${item.start} to ${item.end} (${durationWeeks} Wks)<br>
-            👤 Lead: ${item.lead} (${item.leadSessions}s/wk)<br>
-            🤝 Support: ${item.support}${item.support !== 'None' ? ` (${item.supportSessions}s/wk)` : ''}
+            📅 ${item.start} to ${item.end} (${durationWeeks} Wks)
           </div>
         `;
 
@@ -824,28 +877,21 @@
     }
 
     function renderCharts() {
-      // Track separate lead and support sessions per week
       const daveData = Array.from({ length: 53 }, () => ({ lead: 0, support: 0 }));
       const jamieData = Array.from({ length: 53 }, () => ({ lead: 0, support: 0 }));
 
       cohorts.forEach(item => {
         if (!item) return;
-        const { startW, endW } = getCohortMetrics(item);
+        const { startW, durationWeeks } = getCohortMetrics(item);
 
-        let dLead = 0, dSupp = 0, jLead = 0, jSupp = 0;
+        for (let i = 0; i < durationWeeks; i++) {
+          const w = startW + i;
+          if (w > 52) break;
 
-        if (item.lead) {
-          if (item.lead.indexOf('Dave') !== -1) dLead += item.leadSessions;
-          if (item.lead.indexOf('Jamie') !== -1) jLead += item.leadSessions;
-        }
-        if (item.support === 'Dave') dSupp += item.supportSessions;
-        if (item.support === 'Jamie') jSupp += item.supportSessions;
-
-        for (let w = startW; w <= endW && w <= 52; w++) {
-          daveData[w].lead += dLead;
-          daveData[w].support += dSupp;
-          jamieData[w].lead += jLead;
-          jamieData[w].support += jSupp;
+          daveData[w].lead += item.daveLead[i] || 0;
+          daveData[w].support += item.daveSupport[i] || 0;
+          jamieData[w].lead += item.jamieLead[i] || 0;
+          jamieData[w].support += item.jamieSupport[i] || 0;
         }
       });
 
@@ -860,30 +906,32 @@
         const monday = getMondayOfWeek(w);
         const dateLabel = `${monday.getDate().toString().padStart(2, '0')} ${months[monday.getMonth()]}`;
 
+        const getRagClass = (total) => {
+          if (total <= 3) return 'bar-green';
+          if (total === 4) return 'bar-yellow';
+          return 'bar-red';
+        };
+
         // Dave Column
         const d = daveData[w];
         const dTotal = d.lead + d.support;
+        const dClass = getRagClass(dTotal);
         const dCol = document.createElement('div');
         dCol.className = 'bar-col';
         
-        let dHtml = `<div class="stacked-bar-container" style="height: ${Math.min(100, (dTotal / MAX_CAPACITY) * 100)}%;">`;
-        if (d.support > 0) dHtml += `<div class="bar-support" style="height: ${(d.support / dTotal) * 100}%;"></div>`;
-        if (d.lead > 0) dHtml += `<div class="bar-lead" style="height: ${(d.lead / dTotal) * 100}%;"></div>`;
-        dHtml += `</div>`;
-        dHtml += `<div class="tooltip">W${w} (${dateLabel})<br>Lead: ${d.lead}s | Support: ${d.support}s<br>Total: ${d.total || dTotal}/${MAX_CAPACITY} max</div>`;
+        let dHtml = `<div class="solid-bar ${dClass}" style="height: ${Math.min(100, (dTotal / MAX_CAPACITY) * 100)}%;"></div>`;
+        dHtml += `<div class="tooltip">W${w} (${dateLabel})<br>Lead: ${d.lead}s | Support: ${d.support}s<br>Total: ${dTotal}/${MAX_CAPACITY} max</div>`;
         dCol.innerHTML = dHtml;
         daveContainer.appendChild(dCol);
 
         // Jamie Column
         const j = jamieData[w];
         const jTotal = j.lead + j.support;
+        const jClass = getRagClass(jTotal);
         const jCol = document.createElement('div');
         jCol.className = 'bar-col';
 
-        let jHtml = `<div class="stacked-bar-container" style="height: ${Math.min(100, (jTotal / MAX_CAPACITY) * 100)}%;">`;
-        if (j.support > 0) jHtml += `<div class="bar-support-jamie" style="height: ${(j.support / jTotal) * 100}%;"></div>`;
-        if (j.lead > 0) jHtml += `<div class="bar-lead-jamie" style="height: ${(j.lead / jTotal) * 100}%;"></div>`;
-        jHtml += `</div>`;
+        let jHtml = `<div class="solid-bar ${jClass}" style="height: ${Math.min(100, (jTotal / MAX_CAPACITY) * 100)}%;"></div>`;
         jHtml += `<div class="tooltip">W${w} (${dateLabel})<br>Lead: ${j.lead}s | Support: ${j.support}s<br>Total: ${jTotal}/${MAX_CAPACITY} max</div>`;
         jCol.innerHTML = jHtml;
         jamieContainer.appendChild(jCol);
@@ -895,6 +943,9 @@
       if (!tbody) return;
       tbody.innerHTML = '';
       const progs = ['GT', 'GE', 'GG'];
+
+      const gtLanes = getCohortLanes(cohorts.filter(c => c.programme === 'GT'));
+      const ggLanes = getCohortLanes(cohorts.filter(c => c.programme === 'GG'));
 
       for (let w = 1; w <= 52; w++) {
         const monday = getMondayOfWeek(w);
@@ -922,25 +973,35 @@
             laneContainer.className = 'lane-container';
             const maxLanes = (prog === 'GT' || prog === 'GG') ? 2 : 1;
 
+            const laneMap = prog === 'GT' ? gtLanes : (prog === 'GG' ? ggLanes : {});
+
             for (let l = 0; l < maxLanes; l++) {
               const lane = document.createElement('div');
               lane.className = 'lane';
 
               const matchedItem = matching.find(c => {
                 if (maxLanes === 1) return true;
-                const num = parseInt(c.id.replace(/\D/g, ''), 10) || 1;
-                return (num % 2 !== 0) ? (l === 0) : (l === 1);
+                const assignedLane = laneMap[c.id] !== undefined ? laneMap[c.id] : 0;
+                return assignedLane === l;
               });
 
               if (matchedItem) {
-                const { startW, endW } = getCohortMetrics(matchedItem);
-                const isStart = (w === startW);
-                const isEnd = (w === endW);
+                const { startW } = getCohortMetrics(matchedItem);
+                const weekIndex = w - startW;
+                const cohortIndex = cohorts.findIndex(c => c.id === matchedItem.id);
 
-                let sessStr = `${matchedItem.leadSessions}s/wk`;
-                if (activeFilter !== 'All' && matchedItem.support === activeFilter) {
-                  sessStr = `${matchedItem.supportSessions}s/wk (Supp)`;
-                }
+                const isStart = (w === startW);
+                const isEnd = (w === getCohortMetrics(matchedItem).endW);
+
+                let leadPerson = 'None';
+                let leadSess = 0;
+                if ((matchedItem.jamieLead[weekIndex] || 0) > 0) { leadPerson = 'Jamie'; leadSess = matchedItem.jamieLead[weekIndex]; }
+                else if ((matchedItem.daveLead[weekIndex] || 0) > 0) { leadPerson = 'Dave'; leadSess = matchedItem.daveLead[weekIndex]; }
+
+                let suppPerson = 'None';
+                let suppSess = 0;
+                if ((matchedItem.jamieSupport[weekIndex] || 0) > 0) { suppPerson = 'Jamie'; suppSess = matchedItem.jamieSupport[weekIndex]; }
+                else if ((matchedItem.daveSupport[weekIndex] || 0) > 0) { suppPerson = 'Dave'; suppSess = matchedItem.daveSupport[weekIndex]; }
 
                 const line = document.createElement('div');
                 let cls = `v-line v-line-${prog.toLowerCase()}`;
@@ -948,9 +1009,53 @@
                 if (isEnd) cls += ' v-end';
                 line.className = cls;
 
+                line.innerHTML = `
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:bold;">${matchedItem.id}</span>
+                    ${isStart ? `<span class="date-shift-btn" title="Shift start/end dates by X weeks" style="cursor:pointer; font-size:10px; padding:0 3px; background:rgba(0,0,0,0.15); border-radius:2px;">📅</span>` : ''}
+                  </div>
+                  <div class="v-meta">
+                    <div class="v-meta-row">
+                      <span>L:</span>
+                      <select data-index="${cohortIndex}" data-week="${weekIndex}" data-type="leadPerson">
+                        <option value="None" ${leadPerson === 'None' ? 'selected' : ''}>-</option>
+                        <option value="Dave" ${leadPerson === 'Dave' ? 'selected' : ''}>Dave</option>
+                        <option value="Jamie" ${leadPerson === 'Jamie' ? 'selected' : ''}>Jamie</option>
+                      </select>
+                      <input type="number" min="0" max="5" value="${leadSess}" data-index="${cohortIndex}" data-week="${weekIndex}" data-type="leadSess">
+                    </div>
+                    <div class="v-meta-row">
+                      <span>S:</span>
+                      <select data-index="${cohortIndex}" data-week="${weekIndex}" data-type="suppPerson">
+                        <option value="None" ${suppPerson === 'None' ? 'selected' : ''}>-</option>
+                        <option value="Dave" ${suppPerson === 'Dave' ? 'selected' : ''}>Dave</option>
+                        <option value="Jamie" ${suppPerson === 'Jamie' ? 'selected' : ''}>Jamie</option>
+                      </select>
+                      <input type="number" min="0" max="5" value="${suppSess}" data-index="${cohortIndex}" data-week="${weekIndex}" data-type="suppSess">
+                    </div>
+                  </div>
+                `;
+
                 if (isStart) {
-                  line.innerHTML = `<div>${matchedItem.id}</div><div class="v-meta">${matchedItem.lead} (${sessStr})</div>`;
+                  const shiftBtn = line.querySelector('.date-shift-btn');
+                  shiftBtn.onclick = (ev) => {
+                    ev.stopPropagation();
+                    const weeks = prompt(`Shift ${matchedItem.id} by how many weeks?\n(Enter positive number to move forward, negative to move backward):`, "1");
+                    if (weeks !== null && !isNaN(weeks)) {
+                      const dayShift = parseInt(weeks, 10) * 7;
+                      const sDate = parseDate(matchedItem.start);
+                      const eDate = parseDate(matchedItem.end);
+                      sDate.setDate(sDate.getDate() + dayShift);
+                      eDate.setDate(eDate.getDate() + dayShift);
+                      cohorts[cohortIndex].start = formatDate(sDate);
+                      cohorts[cohortIndex].end = formatDate(eDate);
+                      saveCurrentWorkingState();
+                      renderSpreadsheet();
+                      renderAll();
+                    }
+                  };
                 }
+
                 lane.appendChild(line);
               }
               laneContainer.appendChild(lane);
@@ -961,12 +1066,53 @@
         });
         tbody.appendChild(tr);
       }
+
+      tbody.querySelectorAll('.v-meta select, .v-meta input').forEach(el => {
+        el.addEventListener('change', (e) => {
+          const idx = parseInt(e.target.getAttribute('data-index'), 10);
+          const weekIdx = parseInt(e.target.getAttribute('data-week'), 10);
+          const type = e.target.getAttribute('data-type');
+          const item = cohorts[idx];
+          if (!item) return;
+
+          if (type === 'leadPerson') {
+            const newPerson = e.target.value;
+            const curVal = Math.max(item.jamieLead[weekIdx] || 0, item.daveLead[weekIdx] || 0, 2);
+            item.jamieLead[weekIdx] = (newPerson === 'Jamie') ? curVal : 0;
+            item.daveLead[weekIdx] = (newPerson === 'Dave') ? curVal : 0;
+          } else if (type === 'leadSess') {
+            const val = parseInt(e.target.value, 10) || 0;
+            if ((item.jamieLead[weekIdx] || 0) > 0) item.jamieLead[weekIdx] = val;
+            if ((item.daveLead[weekIdx] || 0) > 0) item.daveLead[weekIdx] = val;
+            if ((item.jamieLead[weekIdx] || 0) === 0 && (item.daveLead[weekIdx] || 0) === 0 && val > 0) {
+              item.daveLead[weekIdx] = val;
+            }
+          } else if (type === 'suppPerson') {
+            const newPerson = e.target.value;
+            const curVal = Math.max(item.jamieSupport[weekIdx] || 0, item.daveSupport[weekIdx] || 0, 1);
+            item.jamieSupport[weekIdx] = (newPerson === 'Jamie') ? curVal : 0;
+            item.daveSupport[weekIdx] = (newPerson === 'Dave') ? curVal : 0;
+          } else if (type === 'suppSess') {
+            const val = parseInt(e.target.value, 10) || 0;
+            if ((item.jamieSupport[weekIdx] || 0) > 0) item.jamieSupport[weekIdx] = val;
+            if ((item.daveSupport[weekIdx] || 0) > 0) item.daveSupport[weekIdx] = val;
+            if ((item.jamieSupport[weekIdx] || 0) === 0 && (item.daveSupport[weekIdx] || 0) === 0 && val > 0) {
+              item.daveSupport[weekIdx] = val;
+            }
+          }
+
+          saveCurrentWorkingState();
+          renderSpreadsheet();
+          renderAll();
+        });
+        el.addEventListener('click', (e) => e.stopPropagation());
+      });
     }
 
     function setupControls() {
       const setFilter = (filter, btn) => {
         activeFilter = filter;
-        document.querySelectorAll('.top-header .btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.top-header .btn:not(#btn-toggle-details)').forEach(b => b.classList.remove('active'));
         if (btn) btn.classList.add('active');
         renderAll();
       };
@@ -975,11 +1121,25 @@
       const btnDave = document.getElementById('btn-dave');
       const btnJamie = document.getElementById('btn-jamie');
       const btnPdf = document.getElementById('btn-pdf');
+      const btnToggleDetails = document.getElementById('btn-toggle-details');
 
       if (btnAll) btnAll.onclick = () => setFilter('All', btnAll);
       if (btnDave) btnDave.onclick = () => setFilter('Dave', btnDave);
       if (btnJamie) btnJamie.onclick = () => setFilter('Jamie', btnJamie);
-      if (btnPdf) btnPdf.onclick = () => { window.print(); };
+
+      if (btnToggleDetails) {
+        let detailed = true;
+        btnToggleDetails.onclick = () => {
+          detailed = !detailed;
+          document.body.classList.toggle('streamlined-view', !detailed);
+          btnToggleDetails.textContent = detailed ? 'Detailed View' : 'Streamlined View';
+          btnToggleDetails.classList.toggle('active', detailed);
+        };
+      }
+
+      if (btnPdf) {
+        btnPdf.onclick = () => { window.print(); };
+      }
     }
 
     function renderAll() {
@@ -988,8 +1148,9 @@
       renderMatrix();
     }
 
-    function init() {
+    async function init() {
       try {
+        await loadDefaultSchedule();
         loadActiveOrLastVersion();
         initHeader();
         setupControls();
